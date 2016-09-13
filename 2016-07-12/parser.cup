@@ -1,0 +1,200 @@
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+init with {:
+	// code to run at the beginning
+	// NOTE: is better to do table in action code, no need to use parser.table etc
+:};
+
+parser code {:
+
+	public boolean generateExceptions = true;
+	
+	public void report_error(String message, Object info) {
+		StringBuffer m = new StringBuffer(message);
+		if (info instanceof Symbol) {
+			if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+				if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+					int line = (((Symbol)info).left) + 1;
+					int column = (((Symbol)info).right) + 1;
+					m.append(" (line " + line + " column " + column + ")");
+				}
+			}
+			System.err.println(m);
+		}
+	}
+	
+	public Object stack(int position) throws Exception {
+		Object result;
+		if(position > 0) {
+			String msg = "Cannot read stack at positive position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+				//Report_err
+			} else {
+				System.err.println("***" + msg + "***");
+				return null;
+			}
+		}
+		result = ((Symbol)stack.elementAt(tos + position)).value;
+		if(result == null) {
+			String msg = "You read null while accessing stack at position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+			} else {
+				System.err.println("***" + msg + "***");
+			}
+			
+		}
+		return result;
+	}
+:};
+
+
+action code {:
+	
+	// TODO: declare here hashmap and initialize it
+	
+	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
+	
+	
+:}
+
+
+//////////////////////////////////
+///// SYMBOLS DECLARATION
+/////////////////////////////////
+
+// TODO: terminals
+terminal SEP, S, EQ, PLUS, MINUS, STAR, DIV;
+terminal CM, RO, RC, BO, BC, C;
+terminal TOKEN1, TOKEN2, DATE;
+terminal STAT, CASE, SWITCH, PRINT, MIN, MAX;
+
+terminal String VAR;
+terminal Integer UINT;
+
+// TODO: non terminals
+non terminal prog;
+
+non terminal header, token_list_e, token1, token2, date;
+non terminal program, instr_list, instr, assign_instr, switch_instr;
+
+non terminal Integer exp, stat_func, case_func, var;
+non terminal String operation;
+non terminal exp_list_e, exp_list;
+non terminal action_list, action_stmt;
+
+non terminal case_stmt_list, case_stmt, print_list, print;
+
+// TODO: precedences (declare before lower precedences)
+precedence left PLUS, MINUS;
+precedence right STAR, DIV;
+
+
+//////////////////////////////////
+///// GRAMMAR
+/////////////////////////////////
+
+start with prog;
+
+prog ::= header SEP program {:
+		System.out.println("Correct");
+	:}
+;
+
+header ::= token_list_e
+	| token_list_e date token_list_e
+	| token_list_e date token_list_e date token_list_e
+;
+
+token_list_e ::= token_list_e token1
+	| token_list_e token2
+	|
+;
+
+token1 ::= TOKEN1 S
+;
+
+token2 ::= TOKEN2 S
+;
+
+date ::= DATE S
+;
+
+program ::= instr instr instr instr instr instr_list
+;
+
+instr_list ::= instr_list instr instr
+	|
+;
+
+instr ::= assign_instr S
+	| switch_instr S
+;
+
+// assign
+
+assign_instr ::= VAR EQ exp
+;
+
+exp ::= exp PLUS exp
+	| exp MINUS exp
+	| exp STAR exp
+	| exp DIV exp
+	| RO exp RC
+	| UINT
+	| var
+	| stat_func
+	| case_func
+;
+
+stat_func ::= STAT RO operation CM exp_list_e RC
+	| STAT RO operation RC
+;
+
+operation ::= MIN
+	| MAX
+;
+
+exp_list_e ::= exp_list
+	|
+;
+
+exp_list ::= exp_list CM exp
+	| exp
+;
+
+case_func ::= CASE RO var CM action_list RC
+;
+
+var ::= VAR
+;
+
+action_list ::= action_list CM action_stmt
+	| action_stmt
+;
+
+action_stmt ::= exp C exp
+;
+
+// switch
+
+switch_instr ::= SWITCH var BO case_stmt_list BC
+;
+
+case_stmt_list ::= case_stmt_list case_stmt
+	| case_stmt
+;
+
+case_stmt ::= CASE exp C print_list
+;
+
+print_list ::= print_list print
+	| print
+;
+
+print ::= PRINT exp S
+;
