@@ -4,62 +4,62 @@ import java.util.*;
 import java.io.*;
 
 init with {:
-    // code to run at the beginning
-    // NOTE: is better to do table in action code, no need to use parser.table etc
+	// code to run at the beginning
+	// NOTE: is better to do table in action code, no need to use parser.table etc
 :};
 
 parser code {:
 
-    public boolean generateExceptions = true;
-    
-    public void report_error(String message, Object info) {
-        StringBuffer m = new StringBuffer(message);
-        if (info instanceof Symbol) {
-            if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
-                if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
-                    int line = (((Symbol)info).left) + 1;
-                    int column = (((Symbol)info).right) + 1;
-                    m.append(" (line " + line + " column " + column + ")");
-                }
-            }
-            System.err.println(m);
-        }
-    }
-    
-    public Object stack(int position) throws Exception {
-        Object result;
-        if(position > 0) {
-            String msg = "Cannot read stack at positive position: " + position;
-            if(generateExceptions) {
-                throw new Exception(msg);
-                //Report_err
-            } else {
-                System.err.println("***" + msg + "***");
-                return null;
-            }
-        }
-        result = ((Symbol)stack.elementAt(tos + position)).value;
-        if(result == null) {
-            String msg = "You read null while accessing stack at position: " + position;
-            if(generateExceptions) {
-                throw new Exception(msg);
-            } else {
-                System.err.println("***" + msg + "***");
-            }
-            
-        }
-        return result;
-    }
+	public boolean generateExceptions = true;
+	
+	public void report_error(String message, Object info) {
+		StringBuffer m = new StringBuffer(message);
+		if (info instanceof Symbol) {
+			if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+				if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+					int line = (((Symbol)info).left) + 1;
+					int column = (((Symbol)info).right) + 1;
+					m.append(" (line " + line + " column " + column + ")");
+				}
+			}
+			System.err.println(m);
+		}
+	}
+	
+	public Object stack(int position) throws Exception {
+		Object result;
+		if(position > 0) {
+			String msg = "Cannot read stack at positive position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+				//Report_err
+			} else {
+				System.err.println("***" + msg + "***");
+				return null;
+			}
+		}
+		result = ((Symbol)stack.elementAt(tos + position)).value;
+		if(result == null) {
+			String msg = "You read null while accessing stack at position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+			} else {
+				System.err.println("***" + msg + "***");
+			}
+			
+		}
+		return result;
+	}
 :};
 
 
 action code {:
-    
-    // TODO: declare here hashmap and initialize it
-    
-    // TODO: declare here useful classes (constructor, no getters and setters but public properties)
-    
-    
+	
+	// TODO: declare here hashmap and initialize it
+	
+	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
+	
+	
 :}
 
 
@@ -84,7 +84,7 @@ action code {:
 start with prog;
 
 prog ::= {:
-        System.out.println("Correct");
-    :}
+		System.out.println("Correct");
+	:}
 ;
 
