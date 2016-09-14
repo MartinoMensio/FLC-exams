@@ -66,4 +66,4 @@ name = [a-zA-Z]+[0-9]*
 // effects of this line (to be left as last rule):
 // - commented: exception if input does not match
 // - uncommented: prints on screen non-matching chars, continue scanning input
-.                { System.out.println("Scanner Error: " + yytext()); }
+//.                { System.out.println("Scanner Error: " + yytext()); }
