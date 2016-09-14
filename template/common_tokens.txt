@@ -1,38 +1,38 @@
 // tokens without type
 
-"+"					{ return sym(sym.PLUS); }
-"-"					{ return sym(sym.MINUS); }
-"*"					{ return sym(sym.STAR); }
-"/"					{ return sym(sym.DIV); }
-"|"					{ return sym(sym.OR); }
-"||"				{ return sym(sym.OROR); }
-"&"					{ return sym(sym.AND); }
-"&&"				{ return sym(sym.ANDAND); }
-"!"					{ return sym(sym.NOT); }
-"=" 				{ return sym(sym.EQ); }
-"!="				{ return sym(sym.NOTEQ); }
-"==" 				{ return sym(sym.EQEQ); }
-"." 				{ return sym(sym.DOT);}
-":" 				{ return sym(sym.C); }
-"," 				{ return sym(sym.CM); }
-";" 				{ return sym(sym.S); }
-"(" 				{ return sym(sym.RO); }
-")" 				{ return sym(sym.RC); }
-"[" 				{ return sym(sym.SO); }
-"]" 				{ return sym(sym.SC); }
-"{"					{ return sym(sym.BO); }
-"}"					{ return sym(sym.BC); }
-"->"				{ return sym(sym.ARROW);}
+"+"                 { return sym(sym.PLUS); }
+"-"                 { return sym(sym.MINUS); }
+"*"                 { return sym(sym.STAR); }
+"/"                 { return sym(sym.DIV); }
+"|"                 { return sym(sym.OR); }
+"||"                { return sym(sym.OROR); }
+"&"                 { return sym(sym.AND); }
+"&&"                { return sym(sym.ANDAND); }
+"!"                 { return sym(sym.NOT); }
+"="                 { return sym(sym.EQ); }
+"!="                { return sym(sym.NOTEQ); }
+"=="                { return sym(sym.EQEQ); }
+"."                 { return sym(sym.DOT); }
+":"                 { return sym(sym.C); }
+","                 { return sym(sym.CM); }
+";"                 { return sym(sym.S); }
+"("                 { return sym(sym.RO); }
+")"                 { return sym(sym.RC); }
+"["                 { return sym(sym.SO); }
+"]"                 { return sym(sym.SC); }
+"{"                 { return sym(sym.BO); }
+"}"                 { return sym(sym.BC); }
+"->"                { return sym(sym.ARROW);}
 
-"if"				{ return sym(sym.IF); }
-"else"				{ return sym(sym.ELSE); }
-"while"				{ return sym(sym.WHILE); }
-"do"				{ return sym(sym.DO); }	
-"switch"			{ return sym(sym.SWITCH); }
-"print"				{ return sym(sym.PRINT); }
+"if"                { return sym(sym.IF); }
+"else"              { return sym(sym.ELSE); }
+"while"             { return sym(sym.WHILE); }
+"do"                { return sym(sym.DO); }    
+"switch"            { return sym(sym.SWITCH); }
+"print"             { return sym(sym.PRINT); }
 
 
 // tokens with type
 
-{var_name}			{ return sym(sym.VAR, yytext()); }
-{uint}				{ return sym(sym.UINT, Integer.parseInt(yytext())); }
+{var_name}          { return sym(sym.VAR, yytext()); }
+{uint}              { return sym(sym.UINT, Integer.parseInt(yytext())); }

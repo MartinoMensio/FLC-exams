@@ -68,13 +68,35 @@ action code {:
 /////////////////////////////////
 
 // TODO: terminals
-// terminal Integer UINT;
+terminal SEP, EQ, SO, SC, CM, S;
+terminal INIT, DEFAULT, WHEN, DO, DONE, PRINT, CASE, NEXT;
+terminal EQEQ, OR, AND, NOT, RO, RC, DOT;
+terminal CODE, HOUR, NUMBER;
+
+terminal String STATE_NAME, ATTRIBUTE_NAME;
+terminal Integer SIGNED_INTEGER;
+terminal String QUOTED_STRING;
 
 // TODO: non terminals
- non terminal prog;
+non terminal prog;
+non terminal header, header_seq_1, hour_list, code_list, number_list, header_seq_2;
+non terminal code_, hour, number;
+
+non terminal states, state;
+non terminal attribute_list;
+non terminal attribute;
+
+non terminal transitions, initial_command, init_command, default_command;
+non terminal when_list, when_command;
+non terminal bool_expr;
+non terminal state_attribute;
+non terminal case_print_command_list;
+non terminal print_command, case_command;
 
 // TODO: precedences (declare before lower precedences)
-
+precedence left OR;
+precedence right AND;
+precedence right NOT;
 
 
 //////////////////////////////////
@@ -83,8 +105,104 @@ action code {:
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP states SEP transitions {:
 		System.out.println("Correct");
 	:}
 ;
 
+// header
+
+header ::= header_seq_1
+	| header_seq_2
+;
+
+header_seq_1 ::= hour_list code_list number_list
+	| hour_list code_list
+;
+
+hour_list ::= hour_list hour
+	| hour hour
+;
+
+code_list ::= code_list code_ code_
+	| code_
+;
+
+number_list ::= number number number number
+	| number number
+;
+
+header_seq_2 ::= code_ number number number
+	| number code_ number number
+	| number number code_ number
+	| number number number code_
+;
+
+code_ ::= CODE S
+;
+
+hour ::= HOUR S
+;
+
+number ::= NUMBER S
+;
+
+// states
+
+states ::= states state state
+	| state state state
+;
+
+state ::= STATE_NAME EQ SO attribute_list SC S
+;
+
+attribute_list ::= attribute_list CM attribute
+	| attribute
+;
+
+attribute ::= ATTRIBUTE_NAME EQ SIGNED_INTEGER
+;
+
+// transitions
+
+transitions ::= initial_command when_list
+;
+
+initial_command ::= init_command
+	| default_command
+;
+
+init_command ::= INIT STATE_NAME S
+;
+
+default_command ::= DEFAULT S
+;
+
+when_list ::= when_list when_command
+	| when_command
+;
+
+when_command ::= WHEN bool_expr DO case_print_command_list DONE S
+;
+
+bool_expr ::= state_attribute EQEQ SIGNED_INTEGER
+	| bool_expr AND bool_expr
+	| bool_expr OR bool_expr
+	| NOT bool_expr
+	| RO bool_expr RC
+;
+
+state_attribute ::= STATE_NAME DOT ATTRIBUTE_NAME
+;
+
+case_print_command_list ::= case_print_command_list print_command
+	| case_print_command_list case_command
+	| print_command
+	| case_command
+;
+
+print_command ::= PRINT QUOTED_STRING S
+;
+
+case_command ::= CASE STATE_NAME NEXT STATE_NAME S
+;
