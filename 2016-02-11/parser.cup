@@ -55,11 +55,37 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
+	public HashMap<String, HashMap<String, Integer>> table = new HashMap<>();
 	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
-	
+	public class Point {
+		int x, y, z;
+
+		public Point(int x, int y, int z) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+		}
+	}
+
+	public class Attribute {
+		String key;
+		int value;
+
+		public Attribute(String key, Integer value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
+
+	public class Burden {
+		boolean enable;
+		Point p;
+
+		public Burden(Boolean enable, Point p) {
+			this.enable = enable;
+			this.p = p;
+		}
+	}
 :}
 
 
@@ -75,15 +101,17 @@ terminal String NAME;
 
 non terminal prog;
 non terminal header, code_list_e, code_, date;
-non terminal commands, command_list_e, start_cmd, command;
+non terminal commands;
+non terminal Burden command_list_e, start_cmd, command;
 non terminal var_cmd;
-non terminal attribute_list;
-non terminal attribute;
-non terminal move_cmd;
-non terminal quantity;
-non terminal when_cmd;
-non terminal bool_expr;
-non terminal move_list;
+non terminal Burden move_cmd, when_cmd;
+non terminal HashMap attribute_list;
+non terminal Attribute attribute;
+non terminal Integer quantity;
+non terminal Boolean bool_expr;
+non terminal Burden move_list;
+
+non terminal Burden nt_0, nt_enabler;
 
 precedence left OR;
 precedence left AND;
@@ -123,45 +151,116 @@ date ::= DATE S
 commands ::= start_cmd command_list_e
 ;
 
-command_list_e ::= command_list_e command
-	|
+command_list_e ::= command_list_e command:a {:
+		RESULT = a;
+	:}
+	| nt_0:a {:
+		RESULT = a;
+	:}
 ;
 
-start_cmd ::= START INTEGER CM INTEGER CM INTEGER S
+start_cmd ::= START INTEGER:a CM INTEGER:b CM INTEGER:c S {:
+		Point p = new Point(a, b, c);
+		RESULT = new Burden(true, p);
+	:}
 ;
 
-command ::= var_cmd
-	| move_cmd
-	| when_cmd
+command ::= nt_0:a var_cmd {:
+		// var_cmd does not modify position
+		RESULT = a;
+	:}
+	| move_cmd:a {:
+		// move_cmd modifies position
+		RESULT = a;
+	:}
+	| when_cmd:a {:
+		// when_cmd can modify position
+		RESULT = a;
+	:}
 ;
 
-var_cmd ::= VAR BO attribute_list BC NAME S
+var_cmd ::= VAR BO attribute_list:b BC NAME:c S {:
+		table.put(c, b);
+	:}
 ;
 
-attribute_list ::= attribute_list CM attribute CM attribute CM attribute
-	| attribute CM attribute CM attribute
+attribute_list ::= attribute_list:a CM attribute:b CM attribute:c CM attribute:d {:
+		RESULT = a;
+		RESULT.put(b.key, b.value);
+		RESULT.put(c.key, c.value);
+		RESULT.put(d.key, d.value);
+	:}
+	| attribute:a CM attribute:b CM attribute:c {:
+		RESULT = new HashMap<String, Integer>();
+		RESULT.put(a.key, a.value);
+		RESULT.put(b.key, b.value);
+		RESULT.put(c.key, c.value);
+	:}
 ;
 
-attribute ::= NAME C INTEGER
+attribute ::= NAME:a C INTEGER:b {:
+		RESULT = new Attribute(a, b);
+	:}
 ;
 
-move_cmd ::= MOVE quantity CM quantity CM quantity S
+move_cmd ::= nt_0:a MOVE quantity:b CM quantity:c CM quantity:d S {:
+		Point p;
+		if(a.enable) {
+			p = new Point(a.p.x + b, a.p.y + c, a.p.z + d);
+			System.out.println("POSITION: X=" + p.x + " Y=" + p.y + " Z=" + p.z);
+		} else {
+			p = new Point(a.p.x, a.p.y, a.p.z);
+		}
+		RESULT = new Burden(a.enable, p);
+	:}
 ;
 
-quantity ::= INTEGER
-	| NAME DOT NAME
+quantity ::= INTEGER:a {:
+		RESULT = a;
+	:}
+	| NAME:a DOT NAME:b {:
+		RESULT = table.get(a).get(b);
+	:}
 ;
 
-when_cmd ::= WHEN bool_expr THEN move_list DONE S
+when_cmd ::= WHEN bool_expr THEN nt_enabler move_list:a DONE S {:
+		RESULT = a;
+	:}
 ;
 
-bool_expr ::= bool_expr AND bool_expr
-	| bool_expr OR bool_expr
-	| NOT bool_expr
-	| quantity EQEQ quantity
-	| quantity NOTEQ quantity
+nt_enabler ::= {:
+		boolean enable = (Boolean)parser.stack(-1);
+		Burden old_b = (Burden)parser.stack(-3);
+		RESULT = new Burden(enable, old_b.p);
+	:}
 ;
 
-move_list ::= move_list move_cmd
-	| move_cmd
+bool_expr ::= bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
+	| quantity:a EQEQ quantity:b {:
+		RESULT = a.intValue() == b.intValue();
+	:}
+	| quantity:a NOTEQ quantity:b {:
+		RESULT = a.intValue() != b.intValue();
+	:}
+;
+
+move_list ::= move_list move_cmd:a {:
+		RESULT = a;
+	:}
+	| move_cmd:a {:
+		RESULT = a;
+	:}
+;
+
+nt_0 ::= {:
+		RESULT = (Burden)parser.stack(0);
+	:}
 ;
