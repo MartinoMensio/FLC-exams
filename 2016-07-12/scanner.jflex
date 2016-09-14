@@ -19,8 +19,6 @@ import java_cup.runtime.*;
 	
 %}
 
-// TODO: declare here regexp
-
 token1 = "?"([a-z]{4}([a-z]{2})*|[A-Z]{5}([A-Z]{2})*)(11[01]|1[01]{3}|10(0[01]{2}|10[01]))?
 
 token2 = {word}[-+]{word}([-+]{word}[-+]{word})*
@@ -32,14 +30,10 @@ date = 2016"/"0(5"/"(2[89]|3[01])|6"/"(0[1-9]|1[0-9]|2[012356789]|30)|7"/"(0[1-9
 var = [a-zA-Z]([a-zA-Z0-9])*
 
 comment = "/*" ~ "*/"
-//comment = "//".*|"/*" ~ "*/"
-//quoted_string = \" ~ \"
 uint = [0-9]|[1-9][0-9]*
 
 %%
 
-// TODO: declare actions
-//{token}			{ return sym(sym.TOKEN);}
 "##"				{ return sym(sym.SEP); }
 ";" 				{ return sym(sym.S); }
 "=" 				{ return sym(sym.EQ); }
@@ -69,8 +63,3 @@ uint = [0-9]|[1-9][0-9]*
 
 {comment}	 		{;}
 \r | \n | \r\n | " " | \t	{;}
-
-// effects of this line (to be left as last rule):
-// - commented: exception if input does not match
-// - uncommented: prints on screen non-matching chars, continue scanning input
-//.				{ System.out.println("Scanner Error: " + yytext()); }

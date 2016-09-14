@@ -57,8 +57,6 @@ action code {:
 	
 	public HashMap<String, Integer> table = new HashMap<>();
 	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
 	public class MinMax {
 		int min, max;
 
@@ -84,7 +82,6 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
 terminal SEP, S, EQ, PLUS, MINUS, STAR, DIV;
 terminal CM, RO, RC, BO, BC, C;
 terminal TOKEN1, TOKEN2, DATE;
@@ -93,7 +90,6 @@ terminal STAT, CASE, SWITCH, PRINT, MIN, MAX;
 terminal String VAR;
 terminal Integer UINT;
 
-// TODO: non terminals
 non terminal prog;
 
 non terminal header, token_list_e, token1, token2, date;
@@ -108,7 +104,7 @@ non terminal case_stmt_list, case_stmt, print_list, print;
 
 non terminal Integer nt_0, nt_1, nt_2;
 non terminal PrintEnabler nt_enabler, nt_1b;
-// TODO: precedences (declare before lower precedences)
+
 precedence left PLUS, MINUS;
 precedence right STAR, DIV;
 
