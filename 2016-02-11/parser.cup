@@ -67,13 +67,27 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
-// terminal Integer UINT;
+terminal SEP, DOT, CM, C, S, BO, BC;
+terminal START, VAR, MOVE, WHEN, THEN, DONE, AND, OR, NOT, NOTEQ, EQEQ;
+terminal CODE, DATE;
+terminal Integer INTEGER;
+terminal String NAME;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, code_list_e, code_, date;
+non terminal commands, command_list_e, start_cmd, command;
+non terminal var_cmd;
+non terminal attribute_list;
+non terminal attribute;
+non terminal move_cmd;
+non terminal quantity;
+non terminal when_cmd;
+non terminal bool_expr;
+non terminal move_list;
 
-// TODO: precedences (declare before lower precedences)
+precedence left OR;
+precedence left AND;
+precedence right NOT;
 
 
 
@@ -83,8 +97,71 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP commands {:
 		System.out.println("Correct");
 	:}
 ;
 
+// header
+
+header ::= code_list_e date code_list_e
+	| code_list_e
+;
+
+code_list_e ::= code_list_e code_
+	|
+;
+
+code_ ::= CODE S
+;
+
+date ::= DATE S
+;
+
+// commands
+
+commands ::= start_cmd command_list_e
+;
+
+command_list_e ::= command_list_e command
+	|
+;
+
+start_cmd ::= START INTEGER CM INTEGER CM INTEGER S
+;
+
+command ::= var_cmd
+	| move_cmd
+	| when_cmd
+;
+
+var_cmd ::= VAR BO attribute_list BC NAME S
+;
+
+attribute_list ::= attribute_list CM attribute CM attribute CM attribute
+	| attribute CM attribute CM attribute
+;
+
+attribute ::= NAME C INTEGER
+;
+
+move_cmd ::= MOVE quantity CM quantity CM quantity S
+;
+
+quantity ::= INTEGER
+	| NAME DOT NAME
+;
+
+when_cmd ::= WHEN bool_expr THEN move_list DONE S
+;
+
+bool_expr ::= bool_expr AND bool_expr
+	| bool_expr OR bool_expr
+	| NOT bool_expr
+	| quantity EQEQ quantity
+	| quantity NOTEQ quantity
+;
+
+move_list ::= move_list move_cmd
+	| move_cmd
+;
