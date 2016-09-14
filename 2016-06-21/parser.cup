@@ -75,7 +75,6 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
 terminal SEP, EQ, SO, SC, CM, S;
 terminal INIT, DEFAULT, WHEN, DO, DONE, PRINT, CASE, NEXT;
 terminal EQEQ, OR, AND, NOT, RO, RC, DOT;
@@ -85,7 +84,6 @@ terminal String STATE_NAME, ATTRIBUTE_NAME;
 terminal Integer SIGNED_INTEGER;
 terminal String QUOTED_STRING;
 
-// TODO: non terminals
 non terminal prog;
 non terminal header, header_seq_1, hour_list, code_list, number_list, header_seq_2;
 non terminal code_, hour, number;
@@ -104,7 +102,6 @@ non terminal String print_command, case_command;
 
 non terminal nt_1, nt_2, nt_3;
 
-// TODO: precedences (declare before lower precedences)
 precedence left OR;
 precedence right AND;
 precedence right NOT;

@@ -34,13 +34,11 @@ state_name = [A-Z][A-Z0-9_]*
 attribute_name = [a-z]+
 
 comment = "/*" ~ "*/"
-//comment = "//".*|"/*" ~ "*/"
 quoted_string = "\"" ~ "\""
 signed_integer = ["+""-"]?([0-9]|[1-9][0-9]*)
 
 %%
 
-// TODO: declare actions
 "##"                { return sym(sym.SEP); }
 "="                 { return sym(sym.EQ); }
 "["                 { return sym(sym.SO); }
