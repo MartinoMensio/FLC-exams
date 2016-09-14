@@ -55,11 +55,28 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
+	public HashMap<String, Integer> table = new HashMap<>();
 	
 	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
 	
-	
+	public class MinMax {
+		int min, max;
+
+		public MinMax(Integer min, Integer max) {
+			this.min = min;
+			this.max = max;
+		}
+	}
+
+	public class PrintEnabler {
+		boolean enable;
+		int value;
+
+		public PrintEnabler(Boolean enable, Integer value) {
+			this.enable = enable;
+			this.value = value;
+		}
+	}
 :}
 
 
@@ -84,11 +101,13 @@ non terminal program, instr_list, instr, assign_instr, switch_instr;
 
 non terminal Integer exp, stat_func, case_func, var;
 non terminal String operation;
-non terminal exp_list_e, exp_list;
-non terminal action_list, action_stmt;
+non terminal MinMax exp_list_e, exp_list;
+non terminal Integer action_list, action_stmt;
 
 non terminal case_stmt_list, case_stmt, print_list, print;
 
+non terminal Integer nt_0, nt_1, nt_2;
+non terminal PrintEnabler nt_enabler, nt_1b;
 // TODO: precedences (declare before lower precedences)
 precedence left PLUS, MINUS;
 precedence right STAR, DIV;
@@ -137,47 +156,110 @@ instr ::= assign_instr S
 
 // assign
 
-assign_instr ::= VAR EQ exp
+assign_instr ::= VAR:a EQ exp:b {:
+		table.put(a, b);
+		System.out.println(a + "=" + b);
+	:}
 ;
 
-exp ::= exp PLUS exp
-	| exp MINUS exp
-	| exp STAR exp
-	| exp DIV exp
-	| RO exp RC
-	| UINT
-	| var
-	| stat_func
-	| case_func
+exp ::= exp:a PLUS exp:b {:
+		RESULT = a + b;
+	:}
+	| exp:a MINUS exp:b {:
+		RESULT = a - b;
+	:}
+	| exp:a STAR exp:b {:
+		RESULT = a * b;
+	:}
+	| exp:a DIV exp:b {:
+		RESULT = a / b;
+	:}
+	| RO exp:a RC {:
+		RESULT = a;
+	:}
+	| UINT:a {:
+		RESULT = a;
+	:}
+	| var:a {:
+		RESULT = a;
+	:}
+	| stat_func:a {:
+		RESULT = a;
+	:}
+	| case_func:a {:
+		RESULT = a;
+	:}
 ;
 
-stat_func ::= STAT RO operation CM exp_list_e RC
-	| STAT RO operation RC
+stat_func ::= STAT RO operation:a CM exp_list_e:b RC {:
+		if(a.equals("min")) {
+			RESULT = b.min;
+		} else {
+			RESULT = b.max;
+		}
+	:}
+	| STAT RO operation RC {:
+		RESULT = 0;
+	:}
 ;
 
-operation ::= MIN
-	| MAX
+operation ::= MIN {:
+		RESULT = "min";
+	:}
+	| MAX {:
+		RESULT = "max";
+	:}
 ;
 
-exp_list_e ::= exp_list
+exp_list_e ::= exp_list:a {:
+		RESULT = a;
+	:}
 	|
 ;
 
-exp_list ::= exp_list CM exp
-	| exp
+exp_list ::= exp_list:a CM exp:b {:
+		RESULT = new MinMax(Math.min(a.min, b), Math.max(a.max, b));
+	:}
+	| exp:a {:
+		RESULT = new MinMax(a, a);
+	:}
 ;
 
-case_func ::= CASE RO var CM action_list RC
+case_func ::= CASE RO var CM action_list:a RC {:
+		RESULT = a;
+	:}
 ;
 
-var ::= VAR
+var ::= VAR:a {:
+		RESULT = table.get(a);
+		//System.out.println(a + RESULT);
+	:}
 ;
 
-action_list ::= action_list CM action_stmt
-	| action_stmt
+action_list ::= action_list:a nt_2 CM action_stmt:b {:
+		if(a != 0) {
+			RESULT = a;
+		} else {
+			RESULT = b;
+		}
+	:}
+	| action_stmt:a {:
+		RESULT = a;
+	:}
 ;
 
-action_stmt ::= exp C exp
+nt_2 ::= {:
+		RESULT = (Integer)parser.stack(-2);
+	:}
+;
+
+action_stmt ::= exp:b nt_2:a C exp:c {:
+		if(a == b) {
+			RESULT = c;
+		} else {
+			RESULT = 0;
+		}
+	:}
 ;
 
 // switch
@@ -185,16 +267,43 @@ action_stmt ::= exp C exp
 switch_instr ::= SWITCH var BO case_stmt_list BC
 ;
 
-case_stmt_list ::= case_stmt_list case_stmt
-	| case_stmt
+case_stmt_list ::= case_stmt_list nt_2 case_stmt
+	| nt_1 case_stmt
 ;
 
-case_stmt ::= CASE exp C print_list
+nt_1 ::= {:
+		RESULT = (Integer)parser.stack(-1);
+	:}
 ;
 
-print_list ::= print_list print
+nt_0 ::= {:
+		RESULT = (Integer)parser.stack(0);
+	:}
+;
+
+case_stmt ::= CASE exp C nt_enabler print_list
+;
+
+print_list ::= print_list nt_1b print
 	| print
 ;
 
-print ::= PRINT exp S
+print ::= PRINT nt_1b:a exp:b S {:
+		if(a.enable) {
+			System.out.println(b * a.value);
+		}
+	:}
+;
+
+nt_1b ::= {:
+		RESULT = (PrintEnabler)parser.stack(-1);
+	:}
+;
+
+nt_enabler ::= {:
+		int val, val2;
+		val = (Integer)parser.stack(-3);
+		val2 = (Integer)parser.stack(-1);
+		RESULT = new PrintEnabler(val == val2, val2);
+	:}
 ;
