@@ -55,9 +55,17 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
+	public HashMap<String, HashMap<String, Integer>> table = new HashMap<>();
 	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
+	public class Attribute {
+		String key;
+		int value;
+
+		public Attribute(String key, Integer value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
 	
 	
 :}
@@ -83,15 +91,18 @@ non terminal header, header_seq_1, hour_list, code_list, number_list, header_seq
 non terminal code_, hour, number;
 
 non terminal states, state;
-non terminal attribute_list;
-non terminal attribute;
+non terminal HashMap attribute_list;
+non terminal Attribute attribute;
 
-non terminal transitions, initial_command, init_command, default_command;
-non terminal when_list, when_command;
-non terminal bool_expr;
-non terminal state_attribute;
-non terminal case_print_command_list;
-non terminal print_command, case_command;
+non terminal transitions;
+non terminal String initial_command, init_command, default_command;
+non terminal String when_list, when_command;
+non terminal Boolean bool_expr;
+non terminal Integer state_attribute;
+non terminal String case_print_command_list;
+non terminal String print_command, case_command;
+
+non terminal nt_1, nt_2, nt_3;
 
 // TODO: precedences (declare before lower precedences)
 precedence left OR;
@@ -153,14 +164,24 @@ states ::= states state state
 	| state state state
 ;
 
-state ::= STATE_NAME EQ SO attribute_list SC S
+state ::= STATE_NAME:a EQ SO attribute_list:b SC S {:
+		table.put(a, b);
+	:}
 ;
 
-attribute_list ::= attribute_list CM attribute
-	| attribute
+attribute_list ::= attribute_list:a CM attribute:b {:
+		RESULT = a;
+		RESULT.put(b.key, b.value);
+	:}
+	| attribute:a {:
+		RESULT = new HashMap<String, Integer>();
+		RESULT.put(a.key, a.value);
+	:}
 ;
 
-attribute ::= ATTRIBUTE_NAME EQ SIGNED_INTEGER
+attribute ::= ATTRIBUTE_NAME:a EQ SIGNED_INTEGER:b {:
+		RESULT = new Attribute(a, b);
+	:}
 ;
 
 // transitions
@@ -168,41 +189,124 @@ attribute ::= ATTRIBUTE_NAME EQ SIGNED_INTEGER
 transitions ::= initial_command when_list
 ;
 
-initial_command ::= init_command
-	| default_command
+initial_command ::= init_command:a {:
+		RESULT = a;
+		System.out.println(a);
+	:}
+	| default_command:a {:
+		RESULT = a;
+		System.out.println(a);
+	:}
 ;
 
-init_command ::= INIT STATE_NAME S
+init_command ::= INIT STATE_NAME:a S {:
+		RESULT = a;
+	:}
 ;
 
-default_command ::= DEFAULT S
+default_command ::= DEFAULT S {:
+		RESULT = "S0";
+	:}
 ;
 
-when_list ::= when_list when_command
-	| when_command
+when_list ::= when_list:a when_command {:
+		// propagate current state
+		RESULT = a;
+	:}
+	| when_command:a {:
+		RESULT = a;
+	:}
 ;
 
-when_command ::= WHEN bool_expr DO case_print_command_list DONE S
+// nt_3 and nt_2 put in the right place (immediately before the case_print_command_list) the current state name and the boolean expression
+when_command ::= WHEN bool_expr DO nt_3 nt_2 case_print_command_list:a DONE S {:
+		if(a != null) {
+			// change state only after a full when_command has been analyzed
+			RESULT = a;
+			System.out.println(a);
+		} else {
+			// keep state
+			RESULT = (String)parser.stack(-8);
+		}
+	:}
 ;
 
-bool_expr ::= state_attribute EQEQ SIGNED_INTEGER
-	| bool_expr AND bool_expr
-	| bool_expr OR bool_expr
-	| NOT bool_expr
-	| RO bool_expr RC
+bool_expr ::= state_attribute:a EQEQ SIGNED_INTEGER:b {:
+		if(a.equals(b)) {
+			RESULT = true;
+		} else {
+			RESULT = false;
+		}
+	:}
+	| bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
+	| RO bool_expr:a RC {:
+		RESULT = a;
+	:}
 ;
 
-state_attribute ::= STATE_NAME DOT ATTRIBUTE_NAME
+state_attribute ::= STATE_NAME:a DOT ATTRIBUTE_NAME:b {:
+		RESULT = table.get(a).get(b);
+	:}
 ;
 
-case_print_command_list ::= case_print_command_list print_command
-	| case_print_command_list case_command
-	| print_command
-	| case_command
+// nt_2 propagate in the stack the current state name and the enabled flag, right before the commands
+case_print_command_list ::= case_print_command_list:a nt_2 nt_2 print_command {:
+		RESULT = a;
+	:}
+	|  case_print_command_list:a nt_2 nt_2 case_command:b {:
+		RESULT = (a != null)? a : b;
+	:}
+	| print_command {:
+		RESULT = null;
+	:}
+	| case_command:a {:
+		RESULT = a;
+	:}
 ;
 
-print_command ::= PRINT QUOTED_STRING S
+print_command ::= PRINT QUOTED_STRING:a S {:
+		// the flag is 2 positions before PRINT
+		boolean enabled = (Boolean)parser.stack(-3);
+		if(enabled) {
+			System.out.println(a);
+		}
+	:}
 ;
 
-case_command ::= CASE STATE_NAME NEXT STATE_NAME S
+case_command ::= CASE STATE_NAME:a NEXT STATE_NAME:b S {:
+		// the flag is 2 positions before PRINT
+		// the current_state is 3 positions before PRINT
+		boolean enabled = (Boolean)parser.stack(-5);
+		String current_state = (String)parser.stack(-6);
+		if(enabled && current_state.equals(a)) {
+			RESULT = b;
+		} else {
+			RESULT = null;
+		}
+	:}
+;
+
+// markers to move up in the stack relevant informations
+
+nt_1 ::= {:
+		RESULT = parser.stack(-1);
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
+;
+
+nt_3 ::= {:
+		RESULT = parser.stack(-3);
+	:}
 ;
