@@ -71,7 +71,7 @@ action code {:
 // terminal Integer UINT;
 
 // TODO: non terminals
- non terminal prog;
+non terminal prog;
 
 // TODO: precedences (declare before lower precedences)
 
