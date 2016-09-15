@@ -55,10 +55,7 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public HashMap<String, Boolean> table = new HashMap<>();
 	
 :}
 
@@ -83,6 +80,8 @@ non terminal Boolean bool_expr;
 non terminal Integer integer;
 non terminal assignment_list;
 non terminal assignment;
+
+non terminal nt_0, nt_off, nt_off_inc;
 
 precedence left OR, PLUS;
 precedence left AND, STAR;
@@ -120,44 +119,114 @@ token3 ::= TOKEN3 S
 // program
 
 program ::= instruction instruction program
-	| instruction instruction instruction instruction
+	| instruction instruction instruction instruction {:
+		/*for(Map.Entry<String, Boolean> entry : table.entrySet()) {
+			System.out.println(entry.getKey() + ": " + entry.getValue());
+		}*/
+	:}
 ;
 
-instruction ::= evaluate_instr
-	| case_instr
-	| save_instr
+instruction ::= evaluate_instr:a {:
+		RESULT = a;
+		System.out.println(a? "TRUE" : "FALSE");
+	:}
+	| case_instr:a {:
+		RESULT = a;
+		System.out.println(a? "TRUE" : "FALSE");
+	:}
+	| save_instr:a {:
+		RESULT = a;
+		System.out.println(a? "TRUE" : "FALSE");
+	:}
 ;
 
-bool_expr ::= integer EQEQ integer
-	| bool_expr EQEQ bool_expr
-	| bool_expr AND bool_expr
-	| bool_expr OR bool_expr
-	| NOT bool_expr
-	| BOOL
-	| VARIABLE
-	| RO bool_expr RC
+bool_expr ::= integer:a EQEQ integer:b {:
+		RESULT = a == b;
+	:}
+	| bool_expr:a EQEQ bool_expr:b {:
+		RESULT = a == b;
+	:}
+	| bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
+	| BOOL:a {:
+		RESULT = a;
+	:}
+	| VARIABLE:a {:
+		RESULT = table.get(a);
+	:}
+	| RO bool_expr:a RC {:
+		RESULT = a;
+	:}
 ;
 
-integer ::= integer PLUS integer
-	| integer STAR integer
-	| RO integer RC
-	| UINT
-	| MINUS UINT %prec uminus
+integer ::= integer:a PLUS integer:b {:
+		RESULT = a + b;
+	:}
+	| integer:a STAR integer:b {:
+		RESULT = a * b;
+	:}
+	| RO integer:a RC {:
+		RESULT = a;
+	:}
+	| UINT:a {:
+		RESULT = a;
+	:}
+	| MINUS UINT:a  {:
+		RESULT = -a;
+	:} %prec uminus
 ;
 
-evaluate_instr ::= EVALUATE bool_expr S
+evaluate_instr ::= EVALUATE bool_expr:a S {:
+		RESULT = a;
+	:}
 ;
 
-case_instr ::= CASE_TRUE bool_expr CM CASE_FALSE bool_expr S
+case_instr ::= nt_0:a CASE_TRUE bool_expr:b CM CASE_FALSE bool_expr:c S {:
+		boolean status = (Boolean)a;
+		RESULT = (Boolean)a? b : c;
+	:}
 ;
 
-save_instr ::= SAVE assignment_list S
+save_instr ::= SAVE nt_off assignment_list S {:
+		RESULT = false;
+	:}
 ;
 
-assignment_list ::= assignment_list CM assignment
+assignment_list ::= assignment_list CM nt_off_inc assignment
 	| assignment
 ;
 
-assignment ::= VARIABLE EQ bool_expr
-	| VARIABLE EQ OFFSET_START integer SC
+assignment ::= VARIABLE:b EQ bool_expr:c {:
+		table.put(b, c);
+	:}
+	| VARIABLE:b EQ OFFSET_START integer:c SC {:
+		int offset = (Integer)parser.stack(-5);
+		if(c >= 0) {
+			throw new Exception("You want to read the future?");
+		}
+		//System.out.println("offset: " + offset + " c:" + c);
+		table.put(b, (Boolean)parser.stack(offset + c -4));
+	:}
+;
+
+nt_0 ::= {:
+		RESULT = parser.stack(0);
+	:}
+;
+
+nt_off ::= {:
+		RESULT = -2;
+	:}
+;
+
+nt_off_inc ::= {:
+		RESULT = (Integer)parser.stack(-2) - 3;
+	:}
 ;
