@@ -55,10 +55,35 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
+	public HashMap<String, HashMap<String, Integer>> table = new HashMap<>();
 	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public class PropertyInt {
+		String key;
+		int value;
+
+		public PropertyInt(String key, Integer value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
+	public class PropertyDouble {
+		String key;
+		double value;
+
+		public PropertyDouble(String key, Double value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
+
+	public class MinMax {
+		int min, max;
+
+		public MinMax(Integer min, Integer max) {
+			this.min = min;
+			this.max = max;
+		}
+	}
 	
 :}
 
@@ -76,17 +101,19 @@ non terminal prog;
 non terminal header, token1_list_e, token1, token2, token3;
 non terminal cars;
 non terminal car;
-non terminal speed_list;
-non terminal speed;
-non terminal races, print_list_e, performance_list;
+non terminal HashMap speed_list;
+non terminal PropertyInt speed;
+non terminal races, print_list_e;
 non terminal print;
-non terminal section_list_e, section_list;
-non terminal performance;
-non terminal part_list;
-non terminal part;
-non terminal drive_stat_list;
-non terminal drive_stat;
+non terminal MinMax section_list;
+non terminal PropertyDouble performance, performance_list;
+non terminal Double part_list;
+non terminal Double part;
+non terminal Double drive_stat_list;
+non terminal Double drive_stat;
 
+non terminal nt_2, nt_3;
+non terminal nt_print;
 
 //////////////////////////////////
 ///// GRAMMAR
@@ -122,53 +149,105 @@ cars ::= cars car car
 	| car car
 ;
 
-car ::= QUOTED_STR BO speed_list BC
+car ::= QUOTED_STR:a BO speed_list:b BC {:
+		table.put(a, b);
+	:}
 ;
 
-speed_list ::= speed_list CM speed
-	| speed
+speed_list ::= speed_list:a CM speed:b {:
+		RESULT = a;
+		RESULT.put(b.key, b.value);
+	:}
+	| speed:a {:
+		RESULT = new HashMap<String, Integer>();
+		RESULT.put(a.key, a.value);
+	:}
 ;
 
-speed ::= QUOTED_STR EQ UINT MPS
+speed ::= QUOTED_STR:a EQ UINT:b MPS {:
+		RESULT = new PropertyInt(a, b);
+	:}
 ;
 
 // races
 
-races ::= print_list_e performance_list
+races ::= print_list_e performance_list:a {:
+		System.out.println("WINNER: " + a.key + " " + a.value + " s");
+	:}
 ;
 
 print_list_e ::= print_list_e print
 	|
 ;
 
-performance_list ::= performance_list performance
-	| performance
+performance_list ::= performance_list:a performance:b {:
+		RESULT = (a.value < b.value)? a : b;
+	:}
+	| performance:a {:
+		RESULT = a;
+	:}
 ;
 
-print ::= PRINT_MIN_MAX RO QUOTED_STR RC RO section_list_e RC S
+print ::= PRINT_MIN_MAX RO QUOTED_STR RC RO nt_2 section_list:a RC S {:
+		System.out.println("MIN: " + a.min + " MAX: " + a.max);
+	:}
 ;
 
-section_list_e ::= section_list
-	|
+section_list ::= section_list:a CM QUOTED_STR:b {:
+		Integer value = table.get((String)parser.stack(-3)).get(b);
+		RESULT = new MinMax(Math.min(a.min, value), Math.max(a.max, value));
+	:}
+	| QUOTED_STR:b {:
+		Integer value = table.get((String)parser.stack(-1)).get(b);
+		RESULT = new MinMax(value, value);
+	:}
 ;
 
-section_list ::= section_list CM QUOTED_STR
-	| QUOTED_STR
+performance ::= QUOTED_STR:a nt_print ARROW nt_2 part_list:b S {:
+		System.out.println("TOTAL: " + b + " s");
+		RESULT = new PropertyDouble(a, b);
+	:}
 ;
 
-performance ::= QUOTED_STR ARROW part_list S
+part_list ::= part_list:a PIPE nt_2 part:b {:
+		RESULT = a + b;
+	:}
+	| part:a {:
+		RESULT = a;
+	:}
 ;
 
-part_list ::= part_list PIPE part
-	| part
+part ::= PART UINT:b C nt_3 drive_stat_list:c {:
+		System.out.println("PART" + b + ": " + c + " s");
+		RESULT = c;
+	:}
 ;
 
-part ::= PART UINT C drive_stat_list
+drive_stat_list ::= drive_stat_list:a CM nt_2 drive_stat:b {:
+		RESULT = a + b;
+	:}
+	| drive_stat:a {:
+		RESULT = a;
+	:}
 ;
 
-drive_stat_list ::= drive_stat_list CM drive_stat
-	| drive_stat
+drive_stat ::= QUOTED_STR:b UINT:c M {:
+		int speed = table.get((String)parser.stack(-3)).get(b);
+		RESULT = ((double)c)/speed;
+	:}
 ;
 
-drive_stat ::= QUOTED_STR UINT M
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
+;
+
+nt_3 ::= {:
+		RESULT = parser.stack(-3);
+	:}
+;
+
+nt_print ::= {:
+		System.out.println((String)parser.stack(0));
+	:}
 ;
