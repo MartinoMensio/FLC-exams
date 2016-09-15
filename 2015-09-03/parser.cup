@@ -67,14 +67,25 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
-// terminal Integer UINT;
+terminal RO, RC, BO, BC, CM, S, C, EQ, ARROW, PIPE, M, MPS, PRINT_MIN_MAX, PART;
+terminal SEP, TOKEN1, TOKEN2, TOKEN3;
+terminal Integer UINT;
+terminal String QUOTED_STR;
 
-// TODO: non terminals
 non terminal prog;
-
-// TODO: precedences (declare before lower precedences)
-
+non terminal header, token1_list_e, token1, token2, token3;
+non terminal cars;
+non terminal car;
+non terminal speed_list;
+non terminal speed;
+non terminal races, print_list_e, performance_list;
+non terminal print;
+non terminal section_list_e, section_list;
+non terminal performance;
+non terminal part_list;
+non terminal part;
+non terminal drive_stat_list;
+non terminal drive_stat;
 
 
 //////////////////////////////////
@@ -83,8 +94,81 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP cars SEP races {:
 		System.out.println("Correct");
 	:}
 ;
 
+header ::= token1_list_e token2 token1_list_e token3 token1_list_e
+	| token1_list_e token3 token1_list_e token2 token1_list_e
+;
+
+token1_list_e ::= token1_list_e token1
+	|
+;
+
+token1 ::= TOKEN1 S
+;
+
+token2 ::= TOKEN2 S
+;
+
+token3 ::= TOKEN3 S
+;
+
+// cars
+
+cars ::= cars car car
+	| car car
+;
+
+car ::= QUOTED_STR BO speed_list BC
+;
+
+speed_list ::= speed_list CM speed
+	| speed
+;
+
+speed ::= QUOTED_STR EQ UINT MPS
+;
+
+// races
+
+races ::= print_list_e performance_list
+;
+
+print_list_e ::= print_list_e print
+	|
+;
+
+performance_list ::= performance_list performance
+	| performance
+;
+
+print ::= PRINT_MIN_MAX RO QUOTED_STR RC RO section_list_e RC S
+;
+
+section_list_e ::= section_list
+	|
+;
+
+section_list ::= section_list CM QUOTED_STR
+	| QUOTED_STR
+;
+
+performance ::= QUOTED_STR ARROW part_list S
+;
+
+part_list ::= part_list PIPE part
+	| part
+;
+
+part ::= PART UINT C drive_stat_list
+;
+
+drive_stat_list ::= drive_stat_list CM drive_stat
+	| drive_stat
+;
+
+drive_stat ::= QUOTED_STR UINT M
+;
