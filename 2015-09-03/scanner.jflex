@@ -55,7 +55,7 @@ uint = [0-9]|[1-9][0-9]*
 {token3}            { return sym(sym.TOKEN3);}
 
 {uint}                { return sym(sym.UINT, Integer.parseInt(yytext()));}
-{quoted_string}     { return sym(sym.QUOTED_STR);}
+{quoted_string}     { return sym(sym.QUOTED_STR, yytext());}
 {comment}             {;}
 \r | \n | \r\n | " " | \t    {;}
 
