@@ -19,7 +19,7 @@ import java_cup.runtime.*;
     
 %}
 
-token1 = 11":"(3[5-9]|[45][0-9])(am)?|12":"[0-5][0-9](pm)?|13":"{min_13}|01":"{min_13}
+token1 = 11":"(3[5-9]|[45][0-9])(am)?|12":"[0-5][0-9](pm)?|13":"{min_13}|01":"{min_13}pm
 
 min_13 = [0-4][0-9]|5[01]
 
@@ -35,7 +35,7 @@ variable = [a-z_][a-zA-Z0-9_]*
 
 comment = "/*" ~ "*/"
 quoted_string = "\"" ~ "\""
-integer = [+-]?[0-9]|[1-9][0-9]*
+uint = [0-9]|[1-9][0-9]*
 
 %%
 
@@ -46,6 +46,7 @@ integer = [+-]?[0-9]|[1-9][0-9]*
 "||"                { return sym(sym.OR); }
 "!"                 { return sym(sym.NOT); }
 "+"                 { return sym(sym.PLUS); }
+"-"                 { return sym(sym.MINUS); }
 "*"                 { return sym(sym.STAR); }
 "("                 { return sym(sym.RO); }
 ")"                 { return sym(sym.RC); }
@@ -66,7 +67,7 @@ integer = [+-]?[0-9]|[1-9][0-9]*
 "TRUE"              { return sym(sym.BOOL, true); }
 "FALSE"             { return sym(sym.BOOL, false); }
 
-{integer}           { return sym(sym.INT, Integer.parseInt(yytext())); }
+{uint}           { return sym(sym.UINT, Integer.parseInt(yytext())); }
 {variable}          { return sym(sym.VARIABLE, yytext()); }
 
 {comment}           {;}

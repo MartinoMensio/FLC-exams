@@ -67,12 +67,13 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-terminal SEP, EQEQ, EQ, AND, OR, NOT, PLUS, STAR, RO, RC, S, CM, OFFSET_START, SC;
+terminal SEP, EQEQ, EQ, AND, OR, NOT, PLUS, MINUS, STAR, RO, RC, S, CM, OFFSET_START, SC;
 terminal TOKEN1, TOKEN2, TOKEN3;
 terminal EVALUATE, CASE_TRUE, CASE_FALSE, SAVE;
 terminal Boolean BOOL;
-terminal Integer INT;
+terminal Integer UINT;
 terminal String VARIABLE;
+terminal uminus;
 
 non terminal prog;
 non terminal header, token12_list_e, token1, token2, token3;
@@ -86,7 +87,7 @@ non terminal assignment;
 precedence left OR, PLUS;
 precedence left AND, STAR;
 precedence left EQEQ;
-precedence right NOT;
+precedence right NOT, uminus;
 
 //////////////////////////////////
 ///// GRAMMAR
@@ -140,7 +141,8 @@ bool_expr ::= integer EQEQ integer
 integer ::= integer PLUS integer
 	| integer STAR integer
 	| RO integer RC
-	| INT
+	| UINT
+	| MINUS UINT %prec uminus
 ;
 
 evaluate_instr ::= EVALUATE bool_expr S
@@ -152,10 +154,10 @@ case_instr ::= CASE_TRUE bool_expr CM CASE_FALSE bool_expr S
 save_instr ::= SAVE assignment_list S
 ;
 
-assignment_list ::= assignment_list assignment
+assignment_list ::= assignment_list CM assignment
 	| assignment
 ;
 
 assignment ::= VARIABLE EQ bool_expr
-	| VARIABLE EQ OFFSET_START INT SC
+	| VARIABLE EQ OFFSET_START integer SC
 ;
