@@ -1,0 +1,161 @@
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+init with {:
+	// code to run at the beginning
+	// NOTE: is better to do table in action code, no need to use parser.table etc
+:};
+
+parser code {:
+
+	public boolean generateExceptions = true;
+	
+	public void report_error(String message, Object info) {
+		StringBuffer m = new StringBuffer(message);
+		if (info instanceof Symbol) {
+			if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+				if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+					int line = (((Symbol)info).left) + 1;
+					int column = (((Symbol)info).right) + 1;
+					m.append(" (line " + line + " column " + column + ")");
+				}
+			}
+			System.err.println(m);
+		}
+	}
+	
+	public Object stack(int position) throws Exception {
+		Object result;
+		if(position > 0) {
+			String msg = "Cannot read stack at positive position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+				//Report_err
+			} else {
+				System.err.println("***" + msg + "***");
+				return null;
+			}
+		}
+		result = ((Symbol)stack.elementAt(tos + position)).value;
+		if(result == null) {
+			String msg = "You read null while accessing stack at position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+			} else {
+				System.err.println("***" + msg + "***");
+			}
+			
+		}
+		return result;
+	}
+:};
+
+
+action code {:
+	
+	// TODO: declare here hashmap and initialize it
+	
+	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
+	
+	
+:}
+
+
+//////////////////////////////////
+///// SYMBOLS DECLARATION
+/////////////////////////////////
+
+terminal SEP, EQEQ, EQ, AND, OR, NOT, PLUS, STAR, RO, RC, S, CM, OFFSET_START, SC;
+terminal TOKEN1, TOKEN2, TOKEN3;
+terminal EVALUATE, CASE_TRUE, CASE_FALSE, SAVE;
+terminal Boolean BOOL;
+terminal Integer INT;
+terminal String VARIABLE;
+
+non terminal prog;
+non terminal header, token12_list_e, token1, token2, token3;
+non terminal program;
+non terminal Boolean instruction, evaluate_instr, case_instr, save_instr;
+non terminal Boolean bool_expr;
+non terminal Integer integer;
+non terminal assignment_list;
+non terminal assignment;
+
+precedence left OR, PLUS;
+precedence left AND, STAR;
+precedence left EQEQ;
+precedence right NOT;
+
+//////////////////////////////////
+///// GRAMMAR
+/////////////////////////////////
+
+start with prog;
+
+prog ::= header SEP program {:
+		System.out.println("Correct");
+	:}
+;
+
+header ::= token12_list_e token3 token12_list_e token3 token12_list_e
+;
+
+token12_list_e ::= token12_list_e token1
+	| token12_list_e token2
+	|
+;
+
+token1 ::= TOKEN1 S
+;
+
+token2 ::= TOKEN2 S
+;
+
+token3 ::= TOKEN3 S
+;
+
+// program
+
+program ::= instruction instruction program
+	| instruction instruction instruction instruction
+;
+
+instruction ::= evaluate_instr
+	| case_instr
+	| save_instr
+;
+
+bool_expr ::= integer EQEQ integer
+	| bool_expr EQEQ bool_expr
+	| bool_expr AND bool_expr
+	| bool_expr OR bool_expr
+	| NOT bool_expr
+	| BOOL
+	| VARIABLE
+	| RO bool_expr RC
+;
+
+integer ::= integer PLUS integer
+	| integer STAR integer
+	| RO integer RC
+	| INT
+;
+
+evaluate_instr ::= EVALUATE bool_expr S
+;
+
+case_instr ::= CASE_TRUE bool_expr CM CASE_FALSE bool_expr S
+;
+
+save_instr ::= SAVE assignment_list S
+;
+
+assignment_list ::= assignment_list assignment
+	| assignment
+;
+
+assignment ::= VARIABLE EQ bool_expr
+	| VARIABLE EQ OFFSET_START INT SC
+;
