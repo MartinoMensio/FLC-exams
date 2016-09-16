@@ -27,7 +27,6 @@ hex_even = [a-zA-Z0-9]{2}?[a-zA-Z0-9]{2}
 
 sep = "$$$"("$$")*
 comment = "//".*
-//quoted_string = \" ~ \"
 uint = [0-9]|[1-9][0-9]*
 float_ = {uint}?"."{uint}|{uint}"."{uint}?
 

@@ -101,10 +101,6 @@ non terminal State nt_state;
 non terminal Modifier nt_modifier;
 non terminal nt_2;
 
-// TODO: precedences (declare before lower precedences)
-
-
-
 //////////////////////////////////
 ///// GRAMMAR
 /////////////////////////////////
