@@ -1,0 +1,19 @@
+XYabcde
+29/02/2012
+XXXXXY24++
+YYYY12347++++
+###
+OGG1 : %-29 : [[ Alt:10, Larg:2, Prof1:1, peso:4 ]]
+OGG2 : %115 : [[
+  Alt:10, Larg:2,
+  Prof:3
+]]
+OGG3 : %0 : [[ Alt:5, Larg:5, Prof:5, peso:7, val:2 ]]
+X_1 : : [[ NUM:2 ]]
+X2 : %-12 : [[ ]]
+X3 : %-13 : [[ NUM:4 ]]
+###
+X_1->NUM : (OGG1->Alt*2+1) * OGG1->Prof1,
+  OGG2->Larg*OGG2->Prof-2+2*3,
+  OGG3->Larg*OGG3->Prof;
+OGG3->val : OGG3->val*OGG1->peso, OGG3->val*OGG3->peso;
