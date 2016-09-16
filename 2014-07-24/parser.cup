@@ -67,14 +67,26 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
-// terminal Integer UINT;
+terminal SEP, S, C, CM, EQ, PLUS, STAR, RO, RC, SO, SC;
+terminal DISTANCE, VALUE, IN, WRITE;
+terminal TOKEN1, TOKEN2, EMAIL;
+terminal String ID, QUOTED_STR;
+terminal Double REAL;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, token1_list_e, token1, token2, email;
+non terminal program, instruction;
+non terminal assignment, value_func;
+non terminal distance_func;
+non terminal point_list;
+non terminal point;
+non terminal interval_list;
+non terminal interval;
+non terminal Double expr;
 
-// TODO: precedences (declare before lower precedences)
 
+precedence left PLUS;
+precedence left STAR;
 
 
 //////////////////////////////////
@@ -83,8 +95,66 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP program {:
 		System.out.println("Correct");
 	:}
 ;
 
+header ::= token1_list_e token2 token1_list_e email token1_list_e
+	| token1_list_e email token1_list_e token2 token1_list_e
+;
+
+token1_list_e ::= token1_list_e token1
+	|
+;
+
+token1 ::= TOKEN1 S
+;
+
+token2 ::= TOKEN2 S
+;
+
+email ::= EMAIL S
+;
+
+// program
+
+program ::= program instruction
+	|
+;
+
+instruction ::= assignment S
+	| distance_func S
+	| value_func S
+;
+
+assignment ::= ID EQ expr
+;
+
+distance_func ::= DISTANCE RO point_list RC
+;
+
+point_list ::= point_list CM point
+	| point
+;
+
+point ::= SO expr CM expr SC
+;
+
+value_func ::= VALUE expr interval_list
+;
+
+interval_list ::= interval_list CM interval
+	| interval
+;
+
+interval ::= IN SO expr C expr SC WRITE QUOTED_STR
+;
+
+expr ::= expr PLUS expr
+	| expr STAR expr
+	| RO expr RC
+	| REAL
+	| ID
+	| distance_func
+;
