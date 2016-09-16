@@ -55,10 +55,44 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public Map<String, Double> table = new HashMap<>();
+
+	public class Point {
+		public double x, y;
+
+		public Point(Double x, Double y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		public double squaredDistanceFrom(Point p) {
+			return (x - p.x)*(x - p.x) + (y - p.y)*(y - p.y);
+		}
+	}
+
+	public class DistanceHelper {
+		// this class helps the calculation of distances
+		// because of the strange definition of distance between multiple points
+		// distance(p1, p2, p3) = sqrt(distance(p1, p2)^2 + distance(p2, p3)^2)
+		public Point last_point;
+		public double accumulator;
+
+		public DistanceHelper() {
+			accumulator = 0;
+			last_point = null;
+		}
+
+		public void addPoint(Point p) {
+			if(last_point != null) {
+				accumulator += last_point.squaredDistanceFrom(p);
+			}
+			last_point = p;
+		}
+
+		public double getDistance() {
+			return Math.sqrt(accumulator);
+		}
+	}
 	
 :}
 
@@ -77,13 +111,14 @@ non terminal prog;
 non terminal header, token1_list_e, token1, token2, email;
 non terminal program, instruction;
 non terminal assignment, value_func;
-non terminal distance_func;
-non terminal point_list;
-non terminal point;
+non terminal Double distance_func;
+non terminal DistanceHelper point_list;
+non terminal Point point;
 non terminal interval_list;
 non terminal interval;
 non terminal Double expr;
 
+non terminal nt_2;
 
 precedence left PLUS;
 precedence left STAR;
@@ -128,33 +163,67 @@ instruction ::= assignment S
 	| value_func S
 ;
 
-assignment ::= ID EQ expr
+assignment ::= ID:a EQ expr:b {:
+		table.put(a, b);
+	:}
 ;
 
-distance_func ::= DISTANCE RO point_list RC
+distance_func ::= DISTANCE RO point_list:a RC {:
+		RESULT = a.getDistance();
+	:}
 ;
 
-point_list ::= point_list CM point
-	| point
+point_list ::= point_list:a CM point:b {:
+		RESULT = a;
+		RESULT.addPoint(b);
+	:}
+	| point:a {:
+		RESULT = new DistanceHelper();
+		RESULT.addPoint(a);
+	:}
 ;
 
-point ::= SO expr CM expr SC
+point ::= SO expr:a CM expr:b SC {:
+		RESULT = new Point(a, b);
+	:}
 ;
 
 value_func ::= VALUE expr interval_list
 ;
 
-interval_list ::= interval_list CM interval
+interval_list ::= interval_list CM nt_2 interval
 	| interval
 ;
 
-interval ::= IN SO expr C expr SC WRITE QUOTED_STR
+interval ::= IN SO expr:a C expr:b SC WRITE QUOTED_STR:c {:
+		double value = (Double)parser.stack(-8);
+		if(value >= a && value <= b) {
+			System.out.println(c);
+		}
+	:}
 ;
 
-expr ::= expr PLUS expr
-	| expr STAR expr
-	| RO expr RC
-	| REAL
-	| ID
-	| distance_func
+expr ::= expr:a PLUS expr:b {:
+		RESULT = a + b;
+	:}
+	| expr:a STAR expr:b {:
+		RESULT = a * b;
+	:}
+	| RO expr:a RC {:
+		RESULT = a;
+	:}
+	| REAL:a {:
+		RESULT = a;
+	:}
+	| ID:a {:
+		RESULT = table.get(a);
+	:}
+	| distance_func:a {:
+		RESULT = a;
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
 ;
