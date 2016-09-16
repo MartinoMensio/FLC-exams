@@ -1,0 +1,187 @@
+
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+init with {:
+	// code to run at the beginning
+	// NOTE: is better to do table in action code, no need to use parser.table etc
+:};
+
+parser code {:
+
+	public boolean generateExceptions = true;
+	
+	public void report_error(String message, Object info) {
+		StringBuffer m = new StringBuffer(message);
+		if (info instanceof Symbol) {
+			if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+				if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+					int line = (((Symbol)info).left) + 1;
+					int column = (((Symbol)info).right) + 1;
+					m.append(" (line " + line + " column " + column + ")");
+				}
+			}
+			System.err.println(m);
+		}
+	}
+	
+	public Object stack(int position) throws Exception {
+		Object result;
+		if(position > 0) {
+			String msg = "Cannot read stack at positive position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+				//Report_err
+			} else {
+				System.err.println("***" + msg + "***");
+				return null;
+			}
+		}
+		result = ((Symbol)stack.elementAt(tos + position)).value;
+		if(result == null) {
+			String msg = "You read null while accessing stack at position: " + position;
+			if(generateExceptions) {
+				throw new Exception(msg);
+			} else {
+				System.err.println("***" + msg + "***");
+			}
+			
+		}
+		return result;
+	}
+:};
+
+
+action code {:
+	
+	// TODO: declare here hashmap and initialize it
+	
+	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
+	
+	
+:}
+
+
+//////////////////////////////////
+///// SYMBOLS DECLARATION
+/////////////////////////////////
+
+terminal SEP, DOT, CM, S, C, EQ, LESS, MORE, SO, SC, RO, RC;
+terminal WHEN, IS, PRINT, AND, OR, NOT, Z_STATS;
+terminal HOUR, CODE;
+terminal Boolean CONDITION;
+terminal String ATTR_NAME, POINT_NAME, QUOTED_STR;
+terminal Double REAL;
+
+non terminal prog;
+non terminal header, hour_list_e, hour, code_;
+non terminal program, command_list;
+non terminal command, point_def_cmd, when_cmd, z_stats_cmd;
+non terminal point_attr_list_e, point_attr_list;
+non terminal point_attr;
+non terminal Boolean bool_expr;
+non terminal Double number, point_coordinate;
+non terminal condition_list;
+non terminal condition;
+non terminal print_cmd_list;
+non terminal print_cmd;
+non terminal point_list;
+
+precedence left OR;
+precedence left AND;
+precedence left NOT;
+
+
+//////////////////////////////////
+///// GRAMMAR
+/////////////////////////////////
+
+start with prog;
+
+prog ::= header SEP program {:
+		System.out.println("Correct");
+	:}
+;
+
+// header
+
+header ::= hour_list_e code_ hour_list_e code_ hour_list_e
+;
+
+hour_list_e ::= hour_list_e hour
+	|
+;
+
+hour ::= HOUR S
+;
+
+code_ ::= CODE S
+;
+
+// program
+
+program ::= command_list
+	|
+;
+
+command_list ::= command_list command command
+	| command
+;
+
+command ::= point_def_cmd
+	| when_cmd
+	| z_stats_cmd
+;
+
+point_def_cmd ::= POINT_NAME EQ SO point_attr_list_e SC S
+;
+
+point_attr_list_e ::= point_attr_list
+	|
+;
+
+point_attr_list ::= point_attr_list CM point_attr
+	| point_attr
+;
+
+point_attr ::= ATTR_NAME C REAL
+;
+
+when_cmd ::= WHEN bool_expr condition_list S
+;
+
+bool_expr ::= number LESS number
+	| number MORE number
+	| bool_expr AND bool_expr
+	| bool_expr OR bool_expr
+	| NOT bool_expr
+;
+
+number ::= REAL
+	| point_coordinate
+;
+
+point_coordinate ::= POINT_NAME DOT ATTR_NAME
+;
+
+condition_list ::= condition_list condition
+	| condition
+;
+
+condition ::= IS CONDITION print_cmd_list
+;
+
+print_cmd_list ::= print_cmd_list print_cmd
+	| print_cmd
+;
+
+print_cmd ::= PRINT QUOTED_STR S
+;
+
+z_stats_cmd ::= Z_STATS RO point_list RC S
+;
+
+point_list ::= point_list CM POINT_NAME
+	| POINT_NAME
+;
