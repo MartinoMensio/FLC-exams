@@ -55,11 +55,25 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
-	
+	public class State {
+		public int oxygen;
+		public int cells;
+
+		public State(Integer oxygen, Integer cells) {
+			this.oxygen = oxygen;
+			this.cells = cells;
+		}
+	}
+
+	public class Modifier {
+		public double temperature;
+		public double food;
+
+		public Modifier(Double temperature, Double food) {
+			this.temperature = temperature;
+			this.food = food;
+		}
+	}
 :}
 
 
@@ -77,11 +91,15 @@ terminal Double FLOAT;
 non terminal prog;
 non terminal description, sequence1, sequence2, code1_odd_list, code1_list_e, code1, code2;
 non terminal simulation;
-non terminal oxygen_init, cells_init;
-non terminal command_list;
-non terminal command, mod_state1, mod_state2;
+non terminal State oxygen_init, cells_init;
+non terminal State command_list;
+non terminal State command, mod_state1, mod_state2;
 non terminal Integer max_function, int_list_e, int_list, int_;
-non terminal variation_list, variation;
+non terminal Double variation_list, variation;
+
+non terminal State nt_state;
+non terminal Modifier nt_modifier;
+non terminal nt_2;
 
 // TODO: precedences (declare before lower precedences)
 
@@ -128,51 +146,118 @@ code2 ::= CODE2 S
 
 // simulation
 
-simulation ::= oxygen_init cells_init command_list
-	| cells_init oxygen_init command_list
+simulation ::= nt_state oxygen_init cells_init command_list
+	| nt_state cells_init oxygen_init command_list
 ;
 
-oxygen_init ::= OXYGEN UINT S
+oxygen_init ::= OXYGEN UINT:a S {:
+		RESULT = (State)parser.stack(-3);
+		RESULT.oxygen = a;
+	:}
 ;
 
-cells_init ::= CELLS UINT S
+cells_init ::= CELLS UINT:a S {:
+		RESULT = (State)parser.stack(-3);
+		RESULT.cells = a;
+	:}
 ;
 
-command_list ::= command_list command
-	| command
+command_list ::= command_list command:a {:
+		RESULT = a;
+	:}
+	| command:a {:
+		RESULT = a;
+	:}
 ;
 
-command ::= mod_state1
-	| mod_state2
+command ::= mod_state1:a {:
+		RESULT = a;
+		System.out.println("oxygen=" + a.oxygen + " cells=" + a.cells);
+	:}
+	| mod_state2:a {:
+		RESULT = a;
+		System.out.println("oxygen=" + a.oxygen + " cells=" + a.cells);
+	:}
 ;
 
-mod_state1 ::= MOD_STATE1 OXYGEN SIGN max_function S
-	| MOD_STATE1 CELLS SIGN max_function S
+mod_state1 ::= MOD_STATE1 OXYGEN SIGN:a max_function:b S {:
+		RESULT = (State)parser.stack(-5);
+		RESULT.oxygen += a? b : -b;
+	:}
+	| MOD_STATE1 CELLS SIGN:a max_function:b S {:
+		RESULT = (State)parser.stack(-5);
+		RESULT.cells += a? b : -b;
+	:}
 ;
 
-max_function ::= MAX RO int_list_e RC
+max_function ::= MAX RO int_list_e:a RC {:
+		RESULT = a;
+	:}
 ;
 
-int_list_e ::= int_list
-	|
+int_list_e ::= int_list:a {:
+		RESULT = a;
+	:}
+	| {:
+		RESULT = 0;
+	:}
 ;
 
-int_list ::= int_list CM int_
-	| int_
+int_list ::= int_list:a CM int_:b {:
+		RESULT = Math.max(a, b);
+	:}
+	| int_:a {:
+		RESULT = a;
+	:}
 ;
 
-int_ ::= UINT
-	| max_function
+int_ ::= UINT:a {:
+		RESULT = a;
+	:}
+	| max_function:a {:
+		RESULT = a;
+	:}
 ;
 
-mod_state2 ::= MOD_STATE2 TEMP FLOAT FOOD FLOAT OXYGEN C variation_list S
-	| MOD_STATE2 TEMP FLOAT FOOD FLOAT CELLS C variation_list S
+mod_state2 ::= MOD_STATE2 TEMP FLOAT FOOD FLOAT OXYGEN C nt_modifier variation_list:a S {:
+		RESULT = (State)parser.stack(-10);
+		RESULT.oxygen += Math.floor(a);
+	:}
+	| MOD_STATE2 TEMP FLOAT FOOD FLOAT CELLS C nt_modifier variation_list:a S {:
+		RESULT = (State)parser.stack(-10);
+		RESULT.cells += Math.floor(a);
+	:}
 ;
 
-variation_list ::= variation_list CM variation
-	| variation
+variation_list ::= variation_list:a CM nt_2 variation:b {:
+		RESULT = a + b;
+	:}
+	| variation:a {:
+		RESULT = a;
+	:}
 ;
 
-variation ::= SIGN UINT TEMP
-	| SIGN UINT FOOD
+variation ::= SIGN:a UINT:b TEMP {:
+		Modifier modifier = (Modifier)parser.stack(-3);
+		RESULT = a? (double)b * modifier.temperature : -(double)b * modifier.temperature;
+	:}
+	| SIGN:a UINT:b FOOD {:
+		Modifier modifier = (Modifier)parser.stack(-3);
+		RESULT = a? (double)b * modifier.food : -(double)b * modifier.food;
+	:}
+;
+
+nt_state ::= {:
+		RESULT = new State(0,0);
+	:}
+;
+
+nt_modifier ::= {:
+		RESULT = new Modifier((Double)parser.stack(-4), (Double)parser.stack(-2));
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
 ;
