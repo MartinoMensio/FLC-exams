@@ -21,9 +21,9 @@ import java_cup.runtime.*;
 
 code1 = "#"[a-zA-Z]{4}[a-zA-Z]{2}*(-[1-3]|[1-9]?[0-9]|1([01][0-9]|2[0-3]))(IJK|XY(Z(ZZ)*)?)?
 
-code2 = {hex_even}[:-]{hex_even}([:-]{hex_even}[:-]{hex_even})*
+code2 = {hex}[:-]{hex}([:-]{hex}[:-]{hex})*
 
-hex_even = [a-zA-Z0-9]{2}?[a-zA-Z0-9]{2}
+hex = [a-fA-F0-9]{2}?[a-fA-F0-9]{2}
 
 sep = "$$$"("$$")*
 comment = "//".*
