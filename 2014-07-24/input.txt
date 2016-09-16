@@ -1,0 +1,32 @@
+/* Start section */
+
+a1.ab12.AB:1234:123b;       /* token2 */
+=ABCDE?xxxyxxxx;            /* token1 */
+stefano_123.xyz@polito.it ; /* email */
+=abcdef?;                   /* token1 */
+
+##
+/* Program section */
+
+/* Variable assignments */
+x1 = 0.0;           
+y1 = 0.0+1.0;       /* y1 = 1.0 */
+x2 = 1.;            /* x2 = 1.0 */
+y2 = 1.0*(0.5+0.5); /* y2 = 1.0 */
+
+/* DISTANCE command */
+dist = DISTANCE( [0.0, DISTANCE([0.0, 0.0], [0.0, 0.0]) ], /* [0.0, 0.0] because... */
+                                       /* ...DISTANCE([0.0, 0.0], [0.0, 0.0]) = 0.0 */
+                [0.0, 0.0],
+		 [0.0, y1+1.0]) ;                         /* [0.0, 1.0] */
+                                                 /* [1.0, 1.0] */
+/* The previous command:
+   dist = DISTANCE([0.0, 0.0], [0.0, 1.0], [1.0, 1.0]) 
+   stores in the variable dist the distance between the three points
+   [0.0, 0.0], [0.0, 1.0] and [1.0, 1.0] that is 2.0 (i.e., dist = 2.0)
+*/
+
+/* VALUE command */
+VALUE dist+0.0 IN [x1 : 1.5+1.0] WRITE "Near !", /* TRUE because 0.0 <= dist <= 2.5 */
+               IN [3.0 : 4.5] WRITE "Middle !",
+               IN [4.0 : 7.0] WRITE "Far !" ;
