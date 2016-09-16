@@ -68,13 +68,18 @@ action code {:
 /////////////////////////////////
 
 // TODO: terminals
-// terminal Integer UINT;
+terminal SEP;
+//terminal uminus;
 
 // TODO: non terminals
 non terminal prog;
 
 // TODO: precedences (declare before lower precedences)
-
+//precedence right uminus;
+// to be used like:
+//MINUS UINT:a  {:
+//		RESULT = -a;
+//	:} %prec uminus
 
 
 //////////////////////////////////
