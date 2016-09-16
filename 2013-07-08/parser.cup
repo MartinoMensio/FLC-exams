@@ -67,19 +67,24 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
 terminal SEP;
-//terminal uminus;
+terminal DOT, S, EQ, BO, BC, HASH, AND, OR, EQEQ, STATE, START, PRINT, IF, THEN, ELSE;
+terminal HOUR, CODE, IP;
+terminal String ID;
+terminal Integer INT;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, hour_ip_list, hour, ip, code_;
+non terminal states, state;
+non terminal variable_declaration_list;
+non terminal variable_declaration;
+non terminal transitions;
+non terminal start_cmd, command_list_e, command, print_cmd, if_cmd;
+non terminal Boolean bool_expr;
+non terminal Integer number, variable;
 
-// TODO: precedences (declare before lower precedences)
-//precedence right uminus;
-// to be used like:
-//MINUS UINT:a  {:
-//		RESULT = -a;
-//	:} %prec uminus
+precedence left OR;
+precedence left AND;
 
 
 //////////////////////////////////
@@ -88,8 +93,79 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP states SEP transitions {:
 		System.out.println("Correct");
 	:}
 ;
 
+header ::= hour_ip_list code_ hour_ip_list
+	| code_ hour_ip_list
+	| hour_ip_list code_
+	| code_ code_ code_
+;
+
+hour_ip_list ::= hour_ip_list hour
+	| hour_ip_list ip
+	| hour
+	| ip
+;
+
+hour ::= HOUR S
+;
+
+ip ::= IP S
+;
+
+code_ ::= CODE S
+;
+
+// states
+
+states ::= states state state
+	| state state state
+;
+
+state ::= STATE ID BO variable_declaration_list BC
+;
+
+variable_declaration_list ::= variable_declaration_list variable_declaration
+	| variable_declaration
+;
+
+variable_declaration ::= ID EQ INT S
+;
+
+// transitions
+
+transitions ::= start_cmd command_list_e
+;
+
+start_cmd ::= START ID S
+;
+
+command_list_e ::= command_list_e command
+	|
+;
+
+command ::= print_cmd
+	| if_cmd
+;
+
+print_cmd ::= PRINT S
+;
+
+if_cmd ::= IF STATE ID HASH bool_expr THEN STATE ID S
+	| IF STATE ID HASH bool_expr THEN STATE ID S ELSE STATE ID S
+;
+
+bool_expr ::= bool_expr AND bool_expr
+	| bool_expr OR bool_expr
+	| number EQEQ number
+;
+
+number ::= INT
+	| variable
+;
+
+variable ::= ID DOT ID
+;
