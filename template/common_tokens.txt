@@ -12,6 +12,10 @@
 "="                 { return sym(sym.EQ); }
 "!="                { return sym(sym.NOTEQ); }
 "=="                { return sym(sym.EQEQ); }
+"<"                 { return sym(sym.LESS); }
+">"                 { return sym(sym.MORE); }
+"<="                { return sym(sym.LESSEQ); }
+">="                { return sym(sym.MOREEQ); }
 "."                 { return sym(sym.DOT); }
 ":"                 { return sym(sym.C); }
 ","                 { return sym(sym.CM); }
