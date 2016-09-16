@@ -67,11 +67,21 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
-// terminal Integer UINT;
+terminal S, RO, RC, CM, C;
+terminal MAX, TEMP, FOOD, OXYGEN, CELLS, MOD_STATE1, MOD_STATE2;
+terminal SEP, CODE1, CODE2;
+terminal Boolean SIGN;
+terminal Integer UINT;
+terminal Double FLOAT;
 
-// TODO: non terminals
 non terminal prog;
+non terminal description, sequence1, sequence2, code1_odd_list, code1_list_e, code1, code2;
+non terminal simulation;
+non terminal oxygen_init, cells_init;
+non terminal command_list;
+non terminal command, mod_state1, mod_state2;
+non terminal Integer max_function, int_list_e, int_list, int_;
+non terminal variation_list, variation;
 
 // TODO: precedences (declare before lower precedences)
 
@@ -83,8 +93,86 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= description SEP simulation {:
 		System.out.println("Correct");
 	:}
 ;
 
+// description
+
+description ::= sequence1
+	| sequence2
+;
+
+sequence1 ::= code1_odd_list code2 code2 code2 code2 code2
+	| code1_odd_list code2 code2 code2
+	| code1_odd_list code2 code2
+;
+
+code1_odd_list ::= code1_odd_list code1 code1
+	| code1 code1 code1
+;
+
+sequence2 ::= code2 code1_list_e code2 code1_list_e
+;
+
+code1_list_e ::= code1_list_e code1
+	|
+;
+
+code1 ::= CODE1 S
+;
+
+code2 ::= CODE2 S
+;
+
+// simulation
+
+simulation ::= oxygen_init cells_init command_list
+	| cells_init oxygen_init command_list
+;
+
+oxygen_init ::= OXYGEN UINT S
+;
+
+cells_init ::= CELLS UINT S
+;
+
+command_list ::= command_list command
+	| command
+;
+
+command ::= mod_state1
+	| mod_state2
+;
+
+mod_state1 ::= MOD_STATE1 OXYGEN SIGN max_function S
+	| MOD_STATE1 CELLS SIGN max_function S
+;
+
+max_function ::= MAX RO int_list_e RC
+;
+
+int_list_e ::= int_list
+	|
+;
+
+int_list ::= int_list CM int_
+	| int_
+;
+
+int_ ::= UINT
+	| max_function
+;
+
+mod_state2 ::= MOD_STATE2 TEMP FLOAT FOOD FLOAT OXYGEN C variation_list S
+	| MOD_STATE2 TEMP FLOAT FOOD FLOAT CELLS C variation_list S
+;
+
+variation_list ::= variation_list CM variation
+	| variation
+;
+
+variation ::= SIGN UINT TEMP
+	| SIGN UINT FOOD
+;

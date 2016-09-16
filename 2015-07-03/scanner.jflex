@@ -19,21 +19,44 @@ import java_cup.runtime.*;
     
 %}
 
+code1 = "#"[a-zA-Z]{4}[a-zA-Z]{2}*(-[1-3]|[1-9]?[0-9]|1([01][0-9]|2[0-3]))(IJK|XY(Z(ZZ)*)?)?
+
+code2 = {hex_even}[:-]{hex_even}([:-]{hex_even}[:-]{hex_even})*
+
+hex_even = [a-zA-Z0-9]{2}?[a-zA-Z0-9]{2}
+
 sep = "$$$"("$$")*
-//comment = "/*" ~ "*/"
-//comment = "//".*|"/*" ~ "*/"
+comment = "//".*
 //quoted_string = \" ~ \"
-//uint = [0-9]|[1-9][0-9]*
+uint = [0-9]|[1-9][0-9]*
+float_ = {uint}?"."{uint}|{uint}"."{uint}?
 
 %%
 
-// TODO: declare actions
-//{token}            { return sym(sym.TOKEN);}
-{sep}                   { return sym(sym.SEP); }
+";"                 { return sym(sym.S); }
+"("                 { return sym(sym.RO); }
+")"                 { return sym(sym.RC); }
+","                 { return sym(sym.CM); }
+":"                 { return sym(sym.C); }
 
-//{uint}                { return sym(sym.UINT, Integer.parseInt(yytext()));}
+"MAX"               { return sym(sym.MAX); }
+"TEMP"              { return sym(sym.TEMP); }
+"FOOD"              { return sym(sym.FOOD); }
+OX[YI]GEN           { return sym(sym.OXYGEN); }
+"CELLS"             { return sym(sym.CELLS); }
+"MOD_STATE1"        { return sym(sym.MOD_STATE1); }
+"MOD_STATE2"        { return sym(sym.MOD_STATE2); }
 
-//{comment}             {;}
+{sep}               { return sym(sym.SEP); }
+{code1}             { return sym(sym.CODE1); }
+{code2}             { return sym(sym.CODE2); }
+
+"+"                 { return sym(sym.SIGN, true); }
+"-"                 { return sym(sym.SIGN, false); }
+{uint}              { return sym(sym.UINT, Integer.parseInt(yytext()));}
+{float_}            { return sym(sym.FLOAT, Double.parseDouble(yytext()));}
+
+{comment}               {;}
 \r | \n | \r\n | " " | \t    {;}
 
 // effects of this line (to be left as last rule):
