@@ -55,10 +55,36 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public HashMap<String, Point> table = new HashMap<>();
+
+	public class Point {
+		public double x, y, z;
+
+		public Point(Double x, Double y, Double z) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+		}
+	}
+
+	public class Stat {
+		public double min, max, total;
+		public int count;
+
+		public Stat() {
+			min = Double.MAX_VALUE;
+			max = Double.MIN_VALUE;
+			total = 0;
+			count = 0;
+		}
+
+		public void collect(Double value) {
+			count++;
+			total += value;
+			min = Math.min(min, value);
+			max = Math.max(max, value);
+		}
+	}
 	
 :}
 
@@ -78,15 +104,18 @@ non terminal prog;
 non terminal header, hour_list_e, hour, code_;
 non terminal program, command_list;
 non terminal command, point_def_cmd, when_cmd, z_stats_cmd;
-non terminal point_attr_list_e, point_attr_list;
-non terminal point_attr;
+non terminal Point point_attr_list_e, point_attr_list;
+non terminal Point point_attr;
 non terminal Boolean bool_expr;
 non terminal Double number, point_coordinate;
 non terminal condition_list;
 non terminal condition;
 non terminal print_cmd_list;
 non terminal print_cmd;
-non terminal point_list;
+non terminal Stat point_list;
+
+non terminal nt_1;
+non terminal Boolean nt_enabler;
 
 precedence left OR;
 precedence left AND;
@@ -134,54 +163,123 @@ command ::= point_def_cmd
 	| z_stats_cmd
 ;
 
-point_def_cmd ::= POINT_NAME EQ SO point_attr_list_e SC S
+point_def_cmd ::= POINT_NAME:a EQ SO point_attr_list_e:b SC S {:
+		table.put(a, b);
+	:}
 ;
 
-point_attr_list_e ::= point_attr_list
-	|
+point_attr_list_e ::= point_attr_list:a {:
+		RESULT = a;
+	:}
+	| {:
+		RESULT = new Point(0., 0., 0.);
+	:}
 ;
 
-point_attr_list ::= point_attr_list CM point_attr
-	| point_attr
+point_attr_list ::= point_attr_list:a CM point_attr:b {:
+		RESULT = a;
+		if(b.x != 0) a.x = b.x;
+		if(b.y != 0) a.y = b.y;
+		if(b.z != 0) a.z = b.z;
+	:}
+	| point_attr:a {:
+		RESULT = a;
+	:}
 ;
 
-point_attr ::= ATTR_NAME C REAL
+point_attr ::= ATTR_NAME:a C REAL:b {:
+		RESULT = new Point(0., 0., 0.);
+		if(a.equals("x")) {
+			RESULT.x = b;
+		} else if(a.equals("y")) {
+			RESULT.y = b;
+		} else if(a.equals("z")) {
+			RESULT.z = b;
+		}
+	:}
 ;
 
 when_cmd ::= WHEN bool_expr condition_list S
 ;
 
-bool_expr ::= number LESS number
-	| number MORE number
-	| bool_expr AND bool_expr
-	| bool_expr OR bool_expr
-	| NOT bool_expr
+bool_expr ::= number:a LESS number:b {:
+		RESULT = a < b;
+	:}
+	| number:a MORE number:b {:
+		RESULT = a > b;
+	:}
+	| bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
 ;
 
-number ::= REAL
-	| point_coordinate
+number ::= REAL:a {:
+		RESULT = a;
+	:}
+	| point_coordinate:a {:
+		RESULT = a;
+	:}
 ;
 
-point_coordinate ::= POINT_NAME DOT ATTR_NAME
+point_coordinate ::= POINT_NAME:a DOT ATTR_NAME:b {:
+		Point p = table.get(a);
+		if(b.equals("x")) {
+			RESULT = p.x;
+		} else if(b.equals("y")) {
+			RESULT = p.y;
+		} else if(b.equals("z")) {
+			RESULT = p.z;
+		}
+	:}
 ;
 
-condition_list ::= condition_list condition
+condition_list ::= condition_list nt_1 condition
 	| condition
 ;
 
-condition ::= IS CONDITION print_cmd_list
+condition ::= IS CONDITION nt_enabler print_cmd_list
 ;
 
-print_cmd_list ::= print_cmd_list print_cmd
+nt_enabler ::= {:
+		RESULT = (Boolean)parser.stack(-2) == (Boolean)parser.stack(0);
+	:}
+;
+
+print_cmd_list ::= print_cmd_list nt_1 print_cmd
 	| print_cmd
 ;
 
-print_cmd ::= PRINT QUOTED_STR S
+print_cmd ::= PRINT QUOTED_STR:a S {:
+		if((Boolean)parser.stack(-3)) {
+			System.out.println(a);
+		}
+	:}
 ;
 
-z_stats_cmd ::= Z_STATS RO point_list RC S
+z_stats_cmd ::= Z_STATS RO point_list:a RC S {:
+		System.out.println("MIN:" + a.min + " MAX:" + a.max + " AVG:" + a.total / a.count);
+	:}
 ;
 
-point_list ::= point_list CM POINT_NAME
-	| POINT_NAME
+point_list ::= point_list:a CM POINT_NAME:b {:
+		RESULT = a;
+		Point p = table.get(b);
+		RESULT.collect(p.z);
+	:}
+	| POINT_NAME:a {:
+		RESULT = new Stat();
+		Point p = table.get(a);
+		RESULT.collect(p.z);
+	:}
+;
+
+nt_1 ::= {:
+		RESULT = parser.stack(-1);
+	:}
 ;
