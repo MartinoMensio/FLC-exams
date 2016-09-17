@@ -55,11 +55,18 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
-	
+	public Map<String, Map<String, Integer>> table = new HashMap<>();
+
+	public class Property {
+		public String key;
+		public int value;
+
+		public Property(String key, Integer value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
+
 :}
 
 
@@ -76,10 +83,10 @@ terminal Integer INT;
 non terminal prog;
 non terminal header, hour_ip_list, hour, ip, code_;
 non terminal states, state;
-non terminal variable_declaration_list;
-non terminal variable_declaration;
+non terminal Map variable_declaration_list;
+non terminal Property variable_declaration;
 non terminal transitions;
-non terminal start_cmd, command_list_e, command, print_cmd, if_cmd;
+non terminal String start_cmd, command_list_e, command, print_cmd, if_cmd;
 non terminal Boolean bool_expr;
 non terminal Integer number, variable;
 
@@ -125,14 +132,24 @@ states ::= states state state
 	| state state state
 ;
 
-state ::= STATE ID BO variable_declaration_list BC
+state ::= STATE ID:a BO variable_declaration_list:b BC {:
+		table.put(a, b);
+	:}
 ;
 
-variable_declaration_list ::= variable_declaration_list variable_declaration
-	| variable_declaration
+variable_declaration_list ::= variable_declaration_list:a variable_declaration:b {:
+		RESULT = a;
+		RESULT.put(b.key, b.value);
+	:}
+	| variable_declaration:a {:
+		RESULT = new HashMap<String, Integer>();
+		RESULT.put(a.key, a.value);
+	:}
 ;
 
-variable_declaration ::= ID EQ INT S
+variable_declaration ::= ID:a EQ INT:b S {:
+		RESULT = new Property(a, b);
+	:}
 ;
 
 // transitions
@@ -140,32 +157,79 @@ variable_declaration ::= ID EQ INT S
 transitions ::= start_cmd command_list_e
 ;
 
-start_cmd ::= START ID S
+start_cmd ::= START ID:a S {:
+		RESULT = a;
+	:}
 ;
 
-command_list_e ::= command_list_e command
-	|
+command_list_e ::= command_list_e command:a {:
+		RESULT = a;
+	:}
+	| {:
+		RESULT = (String)parser.stack(0);
+	:}
 ;
 
-command ::= print_cmd
-	| if_cmd
+command ::= print_cmd:a {:
+		RESULT = a;
+	:}
+	| if_cmd:a {:
+		RESULT = a;
+	:}
 ;
 
-print_cmd ::= PRINT S
+print_cmd ::= PRINT S {:
+		RESULT = (String)parser.stack(-2);
+		System.out.println(RESULT);
+	:}
 ;
 
-if_cmd ::= IF STATE ID HASH bool_expr THEN STATE ID S
-	| IF STATE ID HASH bool_expr THEN STATE ID S ELSE STATE ID S
+if_cmd ::= IF STATE ID:a HASH bool_expr:b THEN STATE ID:c S {:
+		String current_state = (String)parser.stack(-9);
+		if(current_state.equals(a)) {
+			if(b) {
+				RESULT = c;
+			} else {
+				RESULT = current_state;
+			}
+		} else {
+			RESULT = current_state;
+		}
+	:}
+	| IF STATE ID:a HASH bool_expr:b THEN STATE ID:c S ELSE STATE ID:d S {:
+		String current_state = (String)parser.stack(-13);
+		if(current_state.equals(a)) {
+			if(b) {
+				RESULT = c;
+			} else {
+				RESULT = d;
+			}
+		} else {
+			RESULT = current_state;
+		}
+	:}
 ;
 
-bool_expr ::= bool_expr AND bool_expr
-	| bool_expr OR bool_expr
-	| number EQEQ number
+bool_expr ::= bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| number:a EQEQ number:b {:
+		RESULT = a == b;
+	:}
 ;
 
-number ::= INT
-	| variable
+number ::= INT:a {:
+		RESULT = a;
+	:}
+	| variable:a {:
+		RESULT = a;
+	:}
 ;
 
-variable ::= ID DOT ID
+variable ::= ID:a DOT ID:b {:
+		RESULT = table.get(a).get(b);
+	:}
 ;
