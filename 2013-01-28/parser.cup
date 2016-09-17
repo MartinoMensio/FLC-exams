@@ -55,10 +55,17 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public Map<String, Map<String, Integer>> table = new HashMap<>();
+
+	public class Property {
+		public String key;
+		public int value;
+
+		public Property(String key, Integer value) {
+			this.key = key;
+			this.value = value;
+		}
+	}
 	
 :}
 
@@ -76,13 +83,15 @@ terminal Integer UINT;
 non terminal prog;
 non terminal header, codice_list_e, data_list_e, header_list_e, codice, data;
 non terminal obj_decl_list, obj_decl;
-non terminal attr_list_e, attr_list;
-non terminal attr;
+non terminal Map attr_list_e, attr_list;
+non terminal Property attr;
 non terminal operation_list_e, operation;
 non terminal Integer obj_attr;
-non terminal equation_list;
-non terminal equation;
+non terminal Integer equation_list;
+non terminal Integer equation;
 non terminal Integer expression;
+
+non terminal nt_2;
 
 precedence left PLUS, MINUS;
 precedence left STAR, DIV;
@@ -130,19 +139,35 @@ obj_decl_list ::= obj_decl_list obj_decl obj_decl
 	| obj_decl obj_decl
 ;
 
-obj_decl ::= NOME C ID_OGG C SOSO attr_list_e SCSC
-	| NOME C C SOSO attr_list_e SCSC
+obj_decl ::= NOME:a C ID_OGG C SOSO attr_list_e:b SCSC {:
+		table.put(a, b);
+	:}
+	| NOME:a C C SOSO attr_list_e:b SCSC {:
+		table.put(a, b);
+	:}
 ;
 
-attr_list_e ::= attr_list
-	|
+attr_list_e ::= attr_list:a {:
+		RESULT = a;
+	:}
+	| {:
+		RESULT = new HashMap<String, Integer>();
+	:}
 ;
 
-attr_list ::= attr_list CM attr
-	| attr
+attr_list ::= attr_list:a CM attr:b {:
+		RESULT = a;
+		RESULT.put(b.key, b.value);
+	:}
+	| attr:a {:
+		RESULT = new HashMap<String, Integer>();
+		RESULT.put(a.key, a.value);
+	:}
 ;
 
-attr ::= NOME C UINT
+attr ::= NOME:a C UINT:b {:
+		RESULT = new Property(a, b);
+	:}
 ;
 
 // operations
@@ -151,24 +176,55 @@ operation_list_e ::= operation_list_e operation operation
 	|
 ;
 
-operation ::= obj_attr C equation_list S
+operation ::= obj_attr C equation_list:a S {:
+		System.out.println("MINIMO: " + a);
+	:}
 ;
 
-obj_attr ::= NOME ARROW NOME
+obj_attr ::= NOME:a ARROW NOME:b {:
+		RESULT = table.get(a).get(b);
+	:}
 ;
 
-equation_list ::= equation_list CM equation
-	| equation
+equation_list ::= equation_list:a nt_2 CM equation:b {:
+		RESULT = Math.min(a, b);
+	:}
+	| equation:a {:
+		RESULT = a;
+	:}
 ;
 
-equation ::= expression
+equation ::= expression:a {:
+		int value = (Integer)parser.stack(-2);
+		RESULT = a * value;
+		System.out.println(RESULT);
+	:}
 ;
 
-expression ::= expression PLUS expression
-	| expression MINUS expression
-	| expression STAR expression
-	| expression DIV expression
-	| RO expression RC
-	| UINT
-	| obj_attr
+expression ::= expression:a PLUS expression:b {:
+		RESULT = a + b;
+	:}
+	| expression:a MINUS expression:b {:
+		RESULT = a - b;
+	:}
+	| expression:a STAR expression:b {:
+		RESULT = a * b;
+	:}
+	| expression:a DIV expression:b {:
+		RESULT = a / b;
+	:}
+	| RO expression:a RC {:
+		RESULT = a;
+	:}
+	| UINT:a {:
+		RESULT = a;
+	:}
+	| obj_attr:a {:
+		RESULT = a;
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
 ;
