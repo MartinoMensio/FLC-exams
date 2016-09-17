@@ -31,8 +31,7 @@ alpha_str = [a-zA-Z]+
 
 user_code = [a-zA-Z]{3}([a-zA-Z]{2})*"."{number}"."{number}("."{number}{2})*
 number = 1[2-9]|[2-9][0-9]|1([0-2][0-9]|3[0-2])
-//comment = "/*" ~ "*/"
-//comment = "//".*|"/*" ~ "*/"
+
 quoted_string = "\"" ~ "\""
 uint = [0-9]|[1-9][0-9]*
 currency = {uint}?"."[0-9]{2}
@@ -40,7 +39,6 @@ currency = {uint}?"."[0-9]{2}
 
 %%
 
-// TODO: declare actions
 {sep}               { yybegin(not_header); return sym(sym.SEP); }
 ":"                 { return sym(sym.C); }
 ","                 { return sym(sym.CM); }
@@ -59,7 +57,6 @@ currency = {uint}?"."[0-9]{2}
 {quoted_string}     { return sym(sym.QUOTED_STR, yytext()); }
 {uint}              { return sym(sym.UINT, Integer.parseInt(yytext())); }
 
-//{comment}           {;}
 \r | \n | \r\n | " " | \t    {;}
 
 // effects of this line (to be left as last rule):

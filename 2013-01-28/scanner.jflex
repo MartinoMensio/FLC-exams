@@ -30,15 +30,11 @@ nome = [a-zA-Z][a-zA-Z0-9_]*
 
 id_oggetto = "%"(-(3[01]|[12][0-9])|-?[1-9]|0|[1-9][0-9]|1([0-3][0-9]|14[0-5]))
 
-//comment = "/*" ~ "*/"
-//comment = "//".*|"/*" ~ "*/"
-//quoted_string = \" ~ \"
+
 uint = [0-9]|[1-9][0-9]*
-//ureal = {uint}?"."{uint}|{uint}"."{uint}?
 
 %%
 
-// TODO: declare actions
 {sep}               { return sym(sym.SEP);}
 ":"                 { return sym(sym.C); }
 ","                 { return sym(sym.CM); }
@@ -61,9 +57,7 @@ uint = [0-9]|[1-9][0-9]*
 
  
 {uint}              { return sym(sym.UINT, Integer.parseInt(yytext()));}
-//{ureal}             { return sym(sym.REAL, Integer.parseDouble(yytext()));}
 
-//{comment}           {;}
 \r | \n | \r\n | " " | \t    {;}
 
 // effects of this line (to be left as last rule):
