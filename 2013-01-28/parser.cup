@@ -67,19 +67,25 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
 terminal SEP;
-//terminal uminus;
+terminal C, CM, S, PLUS, MINUS, STAR, DIV, RO, RC, SOSO, SCSC, ARROW;
+terminal CODICE, DATA;
+terminal String NOME, ID_OGG;
+terminal Integer UINT;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, codice_list_e, data_list_e, header_list_e, codice, data;
+non terminal obj_decl_list, obj_decl;
+non terminal attr_list_e, attr_list;
+non terminal attr;
+non terminal operation_list_e, operation;
+non terminal Integer obj_attr;
+non terminal equation_list;
+non terminal equation;
+non terminal Integer expression;
 
-// TODO: precedences (declare before lower precedences)
-//precedence right uminus;
-// to be used like:
-//MINUS UINT:a  {:
-//		RESULT = -a;
-//	:} %prec uminus
+precedence left PLUS, MINUS;
+precedence left STAR, DIV;
 
 
 //////////////////////////////////
@@ -88,8 +94,81 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP obj_decl_list SEP operation_list_e {:
 		System.out.println("Correct");
 	:}
 ;
 
+// header
+
+header ::= codice codice_list_e data header_list_e
+	| data data_list_e codice header_list_e
+;
+
+codice_list_e ::= codice_list_e codice
+	|
+;
+
+data_list_e ::= data_list_e data
+	|
+;
+
+header_list_e ::= header_list_e codice
+	| header_list_e data
+	|
+;
+
+codice ::= CODICE
+;
+
+data ::= DATA
+;
+
+// objects
+
+obj_decl_list ::= obj_decl_list obj_decl obj_decl
+	| obj_decl obj_decl
+;
+
+obj_decl ::= NOME C ID_OGG C SOSO attr_list_e SCSC
+	| NOME C C SOSO attr_list_e SCSC
+;
+
+attr_list_e ::= attr_list
+	|
+;
+
+attr_list ::= attr_list CM attr
+	| attr
+;
+
+attr ::= NOME C UINT
+;
+
+// operations
+
+operation_list_e ::= operation_list_e operation operation
+	|
+;
+
+operation ::= obj_attr C equation_list S
+;
+
+obj_attr ::= NOME ARROW NOME
+;
+
+equation_list ::= equation_list CM equation
+	| equation
+;
+
+equation ::= expression
+;
+
+expression ::= expression PLUS expression
+	| expression MINUS expression
+	| expression STAR expression
+	| expression DIV expression
+	| RO expression RC
+	| UINT
+	| obj_attr
+;
