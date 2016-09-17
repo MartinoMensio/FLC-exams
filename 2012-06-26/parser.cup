@@ -67,12 +67,23 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
 terminal SEP;
-//terminal uminus;
+terminal C, CM , S, AUCTION, MIN, EURO, ARROW;
+terminal HOUR, CODE;
+terminal String ALPHA_STR;
+terminal Double CURRENCY;
+terminal String USER_CODE, QUOTED_STR;
+terminal Integer UINT;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, hour_list_e, hour, code_;
+non terminal currencies, currency;
+non terminal user_list_e, user_list;
+non terminal user;
+non terminal auctions, auction;
+non terminal advance_list;
+non terminal advance;
+non terminal alpha_str;
 
 // TODO: precedences (declare before lower precedences)
 //precedence right uminus;
@@ -88,8 +99,64 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
+prog ::= header SEP currencies SEP auctions {:
 		System.out.println("Correct");
 	:}
 ;
 
+// header
+
+header ::= hour hour_list_e code_ hour_list_e code_ hour_list_e
+	| code_ hour hour_list_e code_ hour_list_e
+	| code_ code_ hour hour_list_e
+;
+
+hour_list_e ::= hour_list_e hour
+	|
+;
+
+hour ::= HOUR S
+;
+
+code_ ::= CODE S
+;
+
+// currencies
+
+currencies ::= currencies currency
+	| currency currency currency
+;
+
+currency ::= CURRENCY alpha_str alpha_str C user_list_e S
+;
+
+alpha_str ::= ALPHA_STR
+	| EURO
+;
+
+user_list_e ::= user_list
+	|
+;
+
+user_list ::= user_list CM user
+	| user
+;
+
+user ::= USER_CODE CURRENCY
+;
+
+// auctions
+
+auctions ::= auctions auction auction
+	|
+;
+
+auction ::= AUCTION UINT C QUOTED_STR C UINT MIN ARROW advance_list S
+;
+
+advance_list ::= advance_list CM advance
+	| advance
+;
+
+advance ::= USER_CODE C UINT C CURRENCY EURO
+;
