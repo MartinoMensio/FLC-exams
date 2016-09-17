@@ -26,7 +26,7 @@
 "]"                 { return sym(sym.SC); }
 "{"                 { return sym(sym.BO); }
 "}"                 { return sym(sym.BC); }
-"->"                { return sym(sym.ARROW);}
+"->"                { return sym(sym.ARROW); }
 
 "if"                { return sym(sym.IF); }
 "else"              { return sym(sym.ELSE); }
