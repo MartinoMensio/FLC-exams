@@ -55,10 +55,19 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
-	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public Map<String, Double> table = new HashMap<>();
+
+	public class AuctionHelper {
+		public String best_offerer;
+		public double offer;
+		public int time_limit;
+
+		public AuctionHelper(Double amount, Integer time_limit) {
+			this.best_offerer = null;
+			this.offer = offer;
+			this.time_limit = time_limit;
+		}
+	}
 	
 :}
 
@@ -81,17 +90,12 @@ non terminal currencies, currency;
 non terminal user_list_e, user_list;
 non terminal user;
 non terminal auctions, auction;
-non terminal advance_list;
-non terminal advance;
+non terminal AuctionHelper advance_list;
+non terminal AuctionHelper advance;
 non terminal alpha_str;
 
-// TODO: precedences (declare before lower precedences)
-//precedence right uminus;
-// to be used like:
-//MINUS UINT:a  {:
-//		RESULT = -a;
-//	:} %prec uminus
-
+non terminal AuctionHelper nt_auction;
+non terminal nt_2, nt_3;
 
 //////////////////////////////////
 ///// GRAMMAR
@@ -127,7 +131,7 @@ currencies ::= currencies currency
 	| currency currency currency
 ;
 
-currency ::= CURRENCY alpha_str alpha_str C user_list_e S
+currency ::= CURRENCY alpha_str alpha_str C nt_3 user_list_e S
 ;
 
 alpha_str ::= ALPHA_STR
@@ -138,11 +142,20 @@ user_list_e ::= user_list
 	|
 ;
 
-user_list ::= user_list CM user
+user_list ::= user_list CM nt_2 user
 	| user
 ;
 
-user ::= USER_CODE CURRENCY
+user ::= USER_CODE:a CURRENCY:b {:
+		double value = (Double)parser.stack(-2);
+		value *= b;
+		if(table.get(a) == null) {
+			table.put(a, value);
+		} else {
+			// increase deposit
+			table.put(a, table.get(a) + value);
+		}
+	:}
 ;
 
 // auctions
@@ -151,12 +164,54 @@ auctions ::= auctions auction auction
 	|
 ;
 
-auction ::= AUCTION UINT C QUOTED_STR C UINT MIN ARROW advance_list S
+auction ::= AUCTION UINT C QUOTED_STR C UINT MIN nt_auction ARROW advance_list:a S {:
+		System.out.println("Winner is " + a.best_offerer + " price " + a.offer + " euro");
+		Double money = table.get(a.best_offerer);
+		money -= a.offer;
+		table.put(a.best_offerer, money);
+	:}
 ;
 
-advance_list ::= advance_list CM advance
-	| advance
+nt_auction ::= {:
+		int auct_number = (Integer)parser.stack(-5);
+		int time_limit = (Integer)parser.stack(-1);
+		System.out.println("Auction " + auct_number);
+		RESULT = new AuctionHelper(0., time_limit);
+	:}
 ;
 
-advance ::= USER_CODE C UINT C CURRENCY EURO
+advance_list ::= advance_list CM advance:a {:
+		RESULT = a;
+	:}
+	| advance:a {:
+		RESULT = a;
+	:}
+;
+
+advance ::= USER_CODE:a C UINT:b C CURRENCY:c EURO {:
+		AuctionHelper helper = (AuctionHelper)parser.stack(-7);
+		Double money = table.get(a);
+		if(c < helper.offer) {
+			System.out.println(" " + a + ": Error, advance less than the current auction value");
+		} else if(b > helper.time_limit) {
+			System.out.println(" " + a + ": Error, advance out of time");
+		} else if(money < c) {
+			System.out.println(" " + a + ": Error, available only " + money + " euro");
+		} else {
+			System.out.println(" " + a + ": New auction price " + c + " euro");
+			helper.best_offerer = a;
+			helper.offer = c;
+		}
+		RESULT = helper;
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
+;
+
+nt_3 ::= {:
+		RESULT = parser.stack(-3);
+	:}
 ;
