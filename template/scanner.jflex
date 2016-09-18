@@ -37,7 +37,7 @@ sep = ##
 //{ureal}             { return sym(sym.REAL, Integer.parseDouble(yytext()));}
 
 //{comment}           {;}
-\r | \n | \r\n | " " | \t    {;}
+\r|\n|\r\n|\ |\t   {;}
 
 // effects of this line (to be left as last rule):
 // - commented: exception if input does not match
