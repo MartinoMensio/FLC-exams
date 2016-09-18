@@ -33,11 +33,11 @@ sep = ##
 // TODO: declare actions
 {sep}               { return sym(sym.SEP);}
  
-//{uint}              { return sym(sym.UINT, Integer.parseInt(yytext()));}
-//{ureal}             { return sym(sym.REAL, Integer.parseDouble(yytext()));}
+//{uint}              { return sym(sym.UINT, Integer.parseInt(yytext())); }
+//{ureal}             { return sym(sym.REAL, Integer.parseDouble(yytext())); }
 
 //{comment}           {;}
-\r|\n|\r\n|\ |\t   {;}
+\r|\n|\r\n|\ |\t    {;}
 
 // effects of this line (to be left as last rule):
 // - commented: exception if input does not match
