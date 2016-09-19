@@ -32,5 +32,19 @@ public class Main {\n\
   }\n\
 }" > Main.java
 
+maindbg:
+	echo "import java.io.*;\n\
+public class Main {\n\
+  static public void main(String argv[]) {\n\
+    try {\n\
+      scanner l = new scanner(new FileReader(argv[0]));\n\
+      parser p = new parser(l);\n\
+      Object result = p.debug_parse();\n\
+    } catch (Exception e) {\n\
+      e.printStackTrace();\n\
+    }\n\
+  }\n\
+}" > Main.java
+
 run:
 	java Main input.txt
