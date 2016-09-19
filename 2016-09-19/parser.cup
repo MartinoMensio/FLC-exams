@@ -103,6 +103,7 @@ non terminal Double variation_list, variation;
 
 non terminal Modifier nt_pt;
 non terminal nt_2;
+non terminal State nt_state;
 
 precedence left OR;
 precedence left AND;
@@ -148,7 +149,12 @@ date ::= DATE S
 // states
 
 states ::= set_cmd command_list
-	| command_list
+	| nt_state command_list
+;
+
+nt_state ::= {:
+		RESULT = new State();
+	:}
 ;
 
 set_cmd ::= SET power_setter:a MINUS water_setter:b S {:
