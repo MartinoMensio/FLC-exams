@@ -132,7 +132,7 @@ token_even_l ::= token_even_l token token
 	| token token token token
 ;
 
-seq1 ::= date token_list_e date token_list_e date token_list_e
+seq2 ::= date token_list_e date token_list_e date token_list_e
 ;
 
 token_list_e ::= token_list_e token
