@@ -32,7 +32,7 @@ identifier = [a-zA-Z_][a-zA-Z_0-9]*
 comment = "/*" ~ "*/"
 quoted_string = "\"" ~ "\""
 uint = [0-9]|[1-9][0-9]*
-real = {uint}?"."{uint}|{uint}"."{uint}?
+real = {uint}?"."[0-9]+|{uint}"."[0-9]*
 
 %%
 

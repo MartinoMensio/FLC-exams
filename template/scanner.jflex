@@ -26,7 +26,7 @@ sep = ##
 //comment = "//".*|"/*" ~ "*/"
 //quoted_string = \" ~ \"
 //uint = [0-9]|[1-9][0-9]*
-//ureal = {uint}?"."{uint}|{uint}"."{uint}?
+//ureal = {uint}?"."[0-9]+|{uint}"."[0-9]*
 
 %%
 
