@@ -47,4 +47,4 @@ public class Main {\n\
 }" > Main.java
 
 run:
-	java Main input.txt
+	java Main exam_20160919.txt

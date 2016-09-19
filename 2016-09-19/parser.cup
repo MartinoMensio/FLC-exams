@@ -55,10 +55,25 @@ parser code {:
 
 action code {:
 	
-	// TODO: declare here hashmap and initialize it
+	public class State {
+		public double power;
+		public double water;
+
+		public State() {
+			this.power = 100.;
+			this.water = 100.;
+		}
+	}
 	
-	// TODO: declare here useful classes (constructor, no getters and setters but public properties)
-	
+	public class Modifier {
+		public double pressure;
+		public double temp;
+
+		public Modifier(Double pressure, Double temp) {
+			this.pressure = pressure;
+			this.temp = temp;
+		}
+	}
 	
 :}
 
@@ -67,19 +82,31 @@ action code {:
 ///// SYMBOLS DECLARATION
 /////////////////////////////////
 
-// TODO: terminals
+
 terminal SEP;
-//terminal uminus;
+terminal TOKEN, DATE;
+terminal MINUS, QUESTION_MARK, CM, S, C, SET, POWER, WATER, STATE_CHANGE1;
+terminal STATE_CHANGE2, AND, OR, NOT, RO, RC, ARROW, AVG, PRESSURE, TEMP, HASH;
+terminal Boolean ADD, BOOL, INCREASE;
+terminal Double FLOAT;
 
-// TODO: non terminals
 non terminal prog;
+non terminal header, seq1, seq2, token_even_l, token_list_e, token, date;
+non terminal states;
+non terminal State set_cmd;
+non terminal Double power_setter, water_setter;
+non terminal State command_list, command, state_change1_cmd, state_change2_cmd;
+non terminal Boolean bool_expr;
+non terminal Double avg_func, float_;
+non terminal List float_list_e, float_list;
+non terminal Double variation_list, variation;
 
-// TODO: precedences (declare before lower precedences)
-//precedence right uminus;
-// to be used like:
-//MINUS UINT:a  {:
-//		RESULT = -a;
-//	:} %prec uminus
+non terminal Modifier nt_pt;
+non terminal nt_2;
+
+precedence left OR;
+precedence left AND;
+precedence right NOT;
 
 
 //////////////////////////////////
@@ -88,8 +115,206 @@ non terminal prog;
 
 start with prog;
 
-prog ::= {:
-		System.out.println("Correct");
+prog ::= header SEP states {:
+		//System.out.println("Correct");
 	:}
 ;
 
+header ::= seq1
+	| seq2
+;
+
+seq1 ::= token_even_l date date date
+	| token_even_l date date date date date date date date date date date date date
+;
+
+token_even_l ::= token_even_l token token
+	| token token token token
+;
+
+seq1 ::= date token_list_e date token_list_e date token_list_e
+;
+
+token_list_e ::= token_list_e token
+	|
+;
+
+token ::= TOKEN S
+;
+
+date ::= DATE S
+;
+
+// states
+
+states ::= set_cmd command_list
+	| command_list
+;
+
+set_cmd ::= SET power_setter:a MINUS water_setter:b S {:
+		RESULT = new State();
+		RESULT.power = a;
+		RESULT.water = b;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+	| SET water_setter:a MINUS power_setter:b S {:
+		RESULT = new State();
+		RESULT.power = b;
+		RESULT.water = a;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+	| SET power_setter:a S {:
+		RESULT = new State();
+		RESULT.power = a;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+	| SET water_setter:a S {:
+		RESULT = new State();
+		RESULT.water = a;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+;
+
+power_setter ::= POWER FLOAT:a {:
+		RESULT = a;
+	:}
+;
+
+water_setter ::= WATER FLOAT:a {:
+		RESULT = a;
+	:}
+;
+
+command_list ::= command_list command:a {:
+		RESULT = a;
+	:}
+	| command:a {:
+		RESULT = a;
+	:}
+;
+
+command ::= state_change1_cmd:a {:
+		RESULT = a;
+	:}
+	| state_change2_cmd:a {:
+		RESULT = a;
+	:}
+;
+
+state_change1_cmd ::= STATE_CHANGE1 INCREASE:a POWER bool_expr:b QUESTION_MARK avg_func:c C avg_func:d S {:
+		RESULT = (State)parser.stack(-9);
+		double amount = b? c : d;
+		if(!a) {
+			amount = -amount;
+		}
+		RESULT.power += amount;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+	| STATE_CHANGE1 INCREASE:a WATER bool_expr:b QUESTION_MARK avg_func:c C avg_func:d S {:
+		RESULT = (State)parser.stack(-9);
+		double amount = b? c : d;
+		if(!a) {
+			amount = -amount;
+		}
+		RESULT.water += amount;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+;
+
+bool_expr ::= bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
+	| RO bool_expr:a RC {:
+		RESULT = a;
+	:}
+	| BOOL:a {:
+		RESULT = a;
+	:}
+;
+
+avg_func ::= AVG RO float_list_e:a RC {:
+		double sum = 0;
+		for(Object val : a) {
+			sum += (Double)val;
+		}
+		if(a.size() != 0) {
+			RESULT = sum / a.size();
+		} else {
+			RESULT = 0.;
+		}
+	:}
+;
+
+float_list_e ::= float_list:a {:
+		RESULT = a;
+	:}
+	| {:
+		RESULT = new ArrayList();
+	:}
+;
+
+float_list ::= float_list:a CM float_:b {:
+		RESULT = a;
+		RESULT.add(b);
+	:}
+	| float_:a {:
+		RESULT = new ArrayList();
+		RESULT.add(a);
+	:}
+;
+
+float_ ::= FLOAT:a {:
+		RESULT = a;
+	:}
+	| avg_func:a {:
+		RESULT = a;
+	:}
+;
+
+state_change2_cmd ::= STATE_CHANGE2 FLOAT PRESSURE FLOAT TEMP HASH POWER nt_pt ARROW variation_list:a S {:
+		RESULT = (State)parser.stack(-11);
+		RESULT.power += a;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+	| STATE_CHANGE2 FLOAT PRESSURE FLOAT TEMP HASH WATER nt_pt ARROW variation_list:a S {:
+		RESULT = (State)parser.stack(-11);
+		RESULT.water += a;
+		System.out.println("power: " + RESULT.power + ", water: " + RESULT.water);
+	:}
+;
+
+variation_list ::= variation_list:a nt_2 CM variation:b {:
+		RESULT = a + b;
+	:}
+	| variation:a {:
+		RESULT = a;
+	:}
+;
+
+variation ::= PRESSURE ADD:a FLOAT:b {:
+		Modifier m = (Modifier)parser.stack(-4);
+		RESULT = (a? b : -b) * m.pressure;
+	:}
+	| TEMP ADD:a FLOAT:b {:
+		Modifier m = (Modifier)parser.stack(-4);
+		RESULT = (a? b : -b) * m.temp;
+	:}
+;
+
+nt_pt ::= {:
+		double pressure = (Double)parser.stack(-5);
+		double temp = (Double)parser.stack(-3);
+		RESULT = new Modifier(pressure, temp);
+	:}
+;
+
+nt_2 ::= {:
+		RESULT = parser.stack(-2);
+	:}
+;
