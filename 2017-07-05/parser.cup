@@ -1,0 +1,275 @@
+import java_cup.runtime.*;
+import java.util.*;
+import java.io.*;
+
+init with {:
+    symbol_table = new HashMap<String, HashMap<String, Integer>>();
+:};
+
+parser code {:	
+
+    public HashMap<String, HashMap<String, Integer>> symbol_table;
+
+    public void report_error(String message, Object info) {
+        StringBuffer m = new StringBuffer(message);
+        if (info instanceof Symbol) {
+            if (((Symbol)info).left != 1 && ((Symbol)info).right != 1) {
+                if (((Symbol)info).left != -1 && ((Symbol)info).right != -1) {
+                    int line = (((Symbol)info).left)+1;
+                    int column = (((Symbol)info).right)+1;
+                    m.append(" (line "+line+", column "+column+")");
+                }
+            }
+            System.err.println(m);
+        }
+    }
+
+    public Object stack(int position) {
+        return (((Symbol)stack.elementAt(tos+position)).value);
+    }
+
+:};
+
+action code {:
+
+    public class CarState {
+		
+		public int x;
+		public int y;
+		public int fuel;
+		
+        public CarState(Integer x, Integer y, Integer fuel) {
+            this.x = x;
+            this.y = y;
+			this.fuel = fuel;
+        }
+		
+		public String toString() {
+			return "X: "+x+" Y: "+y+" FUEL: "+fuel;
+		}
+    } 
+	
+	public class StateEnabler{
+		public CarState state;
+		public Boolean flag;
+		
+		public StateEnabler(CarState state, Boolean flag) {
+			this.state = state;
+			this.flag = flag;
+		}
+	}
+	
+	public class MinMax {
+		public int min;
+		public int max;
+		public MinMax(Integer min, Integer max) {
+			this.min = min;
+			this.max = max;
+		}
+	}
+
+:}
+
+
+terminal SET, POSITION, FUEL, DECLARE, INCREASES, DECREASES, MAX, MIN, MV, AND, OR, NOT, SEPARATOR, TOKEN1, TOKEN2, TOKEN3, CS, C, CL, EQ, EQEQ, Q, RO, RC, CO, CC, DOT, MINUS, ELSE;
+terminal Integer INT;
+terminal String VAR;
+
+non terminal prog, header, cars, tokens;
+non terminal CarState set_instruction, command_list, command, declare_cm, if_cm, fuel_cm, mv_list;
+non terminal Boolean bool_expr;
+non terminal HashMap attr_list;
+non terminal MinMax list_values;
+
+non terminal CarState nt_1;
+
+non terminal StateEnabler nt_enabler, nt_disabler;
+
+precedence left OR;
+precedence left AND;
+precedence right NOT;
+
+start with prog;
+
+prog ::= header SEPARATOR cars;
+
+header ::= tokens TOKEN3 CS tokens TOKEN3 CS tokens TOKEN3 CS tokens | tokens TOKEN3 CS tokens TOKEN3 CS tokens TOKEN3 CS
+	| tokens TOKEN3 CS tokens TOKEN3 CS TOKEN3 CS tokens | tokens TOKEN3 CS TOKEN3 CS tokens TOKEN3 CS tokens
+	|  TOKEN3 CS tokens TOKEN3 CS tokens TOKEN3 CS tokens | tokens TOKEN3 CS TOKEN3 CS tokens
+	| tokens TOKEN3 CS tokens TOKEN3 CS tokens
+	| tokens TOKEN3 CS tokens
+	| tokens 
+	| ;
+
+tokens ::= tokens TOKEN1 CS | tokens TOKEN2 CS | TOKEN1 CS | TOKEN2 CS ;
+
+cars ::= set_instruction CS command_list;
+
+set_instruction ::= SET POSITION INT:a C INT:b MINUS FUEL INT:c {: 
+			RESULT = new CarState(a,b,c);
+		:}
+		| SET FUEL INT:c MINUS POSITION INT:a C INT:b {:
+			RESULT = new CarState(a,b,c);
+		:}
+		| SET FUEL INT:c MINUS {:
+			RESULT = new CarState(0,0,c);
+		:}
+		| SET POSITION INT:a C INT:b MINUS {:
+			RESULT = new CarState(a,b,0);
+		:} 
+		| SET MINUS FUEL INT:c {:
+			RESULT = new CarState(0,0,c);
+		:}
+		| SET MINUS POSITION INT:a C INT:b {:
+			RESULT = new CarState(a,b,0);
+		:}
+		| SET MINUS {:
+			RESULT = new CarState(0,0,0);
+		:}
+		;
+
+command_list ::= command_list command CS command:a CS {:
+			RESULT = a;
+		:}
+		| command CS command CS command CS command:a CS {:
+			RESULT = a;
+		:}
+		;
+
+command ::= declare_cm:a {:
+			RESULT = a;
+		:}
+		| if_cm:a {:
+			RESULT = a;
+		:}
+		| fuel_cm:a {:
+			RESULT = a;
+		:}
+		;
+
+declare_cm ::= nt_1:st DECLARE CO attr_list:tab CC VAR:c {: 
+			parser.symbol_table.put(c, tab);
+			RESULT = st;
+		:}
+		;   
+
+attr_list ::= attr_list:tab VAR:a EQ INT:b CS {: tab.put(a, b); RESULT =tab; :} 
+	| VAR:a EQ INT:b CS {: RESULT =new HashMap<String, Integer>(); 
+			RESULT.put(a, b); :} ;
+
+if_cm::= nt_1:st Q bool_expr:a nt_enabler CO mv_list:b CC {:
+		RESULT = st;
+		if(a) {
+			// perform moves b
+			RESULT = b;
+		}
+	:}
+	| nt_1:st Q bool_expr:a nt_enabler CO mv_list:b CC ELSE nt_disabler CO mv_list:c CC {:
+		if(a) {
+			// perform moves b
+			RESULT = b;
+		} else {
+			// perform moves c
+			RESULT = c;
+		}
+	:}
+	; // if bool_expr true: exec mv_list
+	
+nt_enabler ::= {:
+	Boolean flag = (Boolean)parser.stack(0);
+	CarState state = (CarState)parser.stack(-2);
+	RESULT = new StateEnabler(state, flag);
+:};
+
+nt_disabler ::= {:
+	Boolean flag = (Boolean)parser.stack(-5);
+	CarState state = (CarState)parser.stack(-7);
+	RESULT = new StateEnabler(state, !flag);
+:};
+
+bool_expr ::= bool_expr:a AND bool_expr:b {:
+		RESULT = a && b;
+	:}
+	| bool_expr:a OR bool_expr:b {:
+		RESULT = a || b;
+	:}
+	| NOT bool_expr:a {:
+		RESULT = !a;
+	:}
+	| RO bool_expr:a RC {:
+		RESULT = a;
+	:}
+	| VAR:car DOT VAR:attr EQEQ INT:b {:
+		HashMap<String, Integer> attributes = parser.symbol_table.get(car);
+		Integer value = (Integer) attributes.get(attr);
+		if (b == value)
+			RESULT = true;
+		else
+			RESULT = false;
+	:}
+;
+
+mv_list ::= mv_list:st MV INT:a C INT:b C FUEL INT:c CS {:
+		StateEnabler en = (StateEnabler)parser.stack(-10);
+		if(en.flag) {
+			RESULT = st;
+			RESULT.x+=a;
+			RESULT.y+=b;
+			RESULT.fuel+=c;
+			System.out.println(RESULT.toString());
+		}
+	:}
+	| MV INT:a C INT:b C FUEL INT:c CS {:
+		StateEnabler en = (StateEnabler)parser.stack(-9);
+		if(en.flag) {
+			RESULT = en.state;
+			RESULT.x+=a;
+			RESULT.y+=b;
+			RESULT.fuel+=c;
+			System.out.println(RESULT.toString());
+		}
+	:}
+	; // print new state
+
+fuel_cm ::= nt_1:st FUEL INCREASES CL MAX RO list_values:a RC {:
+		RESULT = st;
+		RESULT.fuel+=a.max;
+	:}
+	| nt_1:st FUEL INCREASES CL MIN RO list_values:a RC {:
+		RESULT = st;
+		RESULT.fuel+=a.min;
+	:}
+	| nt_1:st FUEL DECREASES CL MAX RO list_values:a RC {:
+		RESULT = st;
+		RESULT.fuel-=a.max;
+	:}
+	| nt_1:st FUEL DECREASES CL MIN RO list_values:a RC {:
+		RESULT = st;
+		RESULT.fuel-=a.min;
+	:}
+;
+
+list_values ::= list_values:a C VAR:car DOT VAR:attr {: HashMap<String, Integer> attributes = parser.symbol_table.get(car);
+		Integer value = (Integer) attributes.get(attr);
+		RESULT = a;
+		if(RESULT.min > value) {
+			RESULT.min = value;
+		}
+		if(RESULT.max<value) {
+			RESULT.max = value;
+		} :}
+		| list_values:a C INT:b {: RESULT = a;
+		if(RESULT.min > b) {
+			RESULT.min = b;
+		}
+		if(RESULT.max<b) {
+			RESULT.max = b;
+		}  :}
+		| VAR:car DOT VAR:attr {: HashMap<String, Integer> attributes = parser.symbol_table.get(car);
+		Integer value = (Integer) attributes.get(attr); RESULT = new MinMax(value, value); :}
+		| INT:a {: RESULT = new MinMax(a, a); :};
+
+nt_1 ::= {:
+	RESULT = (CarState)parser.stack(-1);
+:}
+;
